@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Clone - Reproductor M3U Mejorado</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #141414;
+            color: #fff;
+            line-height: 1.4;
+        }
+        
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        button {
+            cursor: pointer;
+            border: none;
+        }
+        
+        /* Header y navegación */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+        
+        .header.scrolled {
+            background-color: #141414;
+        }
+        
+        .logo {
+            height: 25px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 20px;
+        }
+        
+        .nav-links a {
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #b3b3b3;
+        }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-icon, .notifications, .profile {
+            margin-left: 20px;
+            cursor: pointer;
+        }
+        
+        /* Banner principal */
+        .banner {
+            position: relative;
+            height: 80vh;
+            background: linear-gradient(to top, #141414, transparent 50%), 
+                        linear-gradient(to right, #141414, transparent 30%),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="%23fff">Imagen de película destacada</text></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+        }
+        
+        .banner-content {
+            max-width: 40%;
+            z-index: 2;
+        }
+        
+        .banner-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .banner-buttons {
+            display: flex;
+            margin-top: 20px;
+        }
+        
+        .banner-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .banner-button:hover {
+            opacity: 0.8;
+        }
+        
+        .play-button {
+            background-color: #fff;
+            color: #000;
+        }
+        
+        .info-button {
+            background-color: rgba(109, 109, 110, 0.7);
+            color: #fff;
+        }
+        
+        .banner-description {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: #d2d2d2;
+        }
+        
+        /* Secciones de contenido */
+        .content-section {
+            padding: 0 50px;
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        /* Carrusel de películas */
+        .carousel {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .carousel-container {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+        }
+        
+        .carousel-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .carousel-item {
+            min-width: calc(20% - 4px);
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .carousel-item:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        
+        .carousel-item img {
+            width: 100%;
+            display: block;
+        }
+        
+        .progress-bar-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #e50914;
+            transition: width 0.3s ease;
+        }
+        
+        .carousel-nav {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50px;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .carousel:hover .carousel-nav {
+            opacity: 1;
+        }
+        
+        .carousel-nav.prev {
+            left: 0;
+        }
+        
+        .carousel-nav.next {
+            right: 0;
+        }
+        
+        /* Modal de detalles de serie */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: #181818;
+            margin: 50px auto;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            position: relative;
+            height: 60vh;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .modal-info {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .modal-rating {
+            color: #46d369;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .modal-year, .modal-seasons {
+            margin-right: 15px;
+        }
+        
+        .modal-description {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .seasons-container {
+            margin-top: 30px;
+        }
+        
+        .season-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .episode-card {
+            background-color: #2f2f2f;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .episode-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .episode-image {
+            width: 100%;
+            height: 120px;
+            background-color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+        }
+        
+        .episode-info {
+            padding: 10px;
+        }
+        
+        .episode-number {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .episode-name {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        
+        /* Reproductor de video mejorado */
+        .video-player {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 3000;
+        }
+        
+        .video-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .video-player video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .video-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 1.2rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: opacity 0.3s;
+        }
+        
+        .video-title.hidden {
+            opacity: 0;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            transition: opacity 0.3s;
+        }
+        
+        .video-controls.hidden {
+            opacity: 0;
+        }
+        
+        .controls-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .video-controls-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .video-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+        
+        .control-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        
+        .control-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #e50914;
+            border-radius: 3px;
+            width: 0%;
+            position: relative;
+        }
+        
+        .progress-buffered {
+            position: absolute;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .time-display {
+            color: white;
+            font-size: 0.9rem;
+            min-width: 100px;
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .volume-slider {
+            width: 80px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .volume-fill {
+            height: 100%;
+            background-color: #fff;
+            border-radius: 3px;
+            width: 100%;
+        }
+        
+        .video-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 50px;
+            color: #808080;
+        }
+        
+        .social-links {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .social-links a {
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .footer-links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .footer-links a {
+            font-size: 13px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .service-code {
+            border: 1px solid #808080;
+            padding: 6px;
+            background: transparent;
+            color: #808080;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        
+        .copyright {
+            font-size: 11px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .banner {
+                height: 60vh;
+                padding: 0 20px;
+            }
+            
+            .banner-content {
+                max-width: 100%;
+            }
+            
+            .banner-title {
+                font-size: 2rem;
+            }
+            
+            .content-section {
+                padding: 0 20px;
+                margin-bottom: 20px;
+            }
+            
+            .carousel-item {
+                min-width: calc(33.33% - 4px);
+            }
+            
+            .episodes-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .footer-links {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .volume-slider {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Input oculto para selección de archivos M3U -->
+    <input type="file" id="m3u-files" multiple accept=".m3u,.m3u8" style="display: none;">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-left">
+            <a href="#" class="logo">
+                <svg width="92" height="25" viewBox="0 0 111 30" fill="none">
+                    <path d="M105.062 14.28L111 30C107.249 29.755 104.062 29.436 100.782 29.436C97.593 29.436 94.124 29.755 90.374 30L96.937 14.28C98.593 9.72 100.782 4.14 100.782 4.14C100.782 4.14 102.406 9.72 105.062 14.28ZM77.5 0L70.125 14.28L62.75 0H54.5L66.125 30H74.375L86 0H77.5ZM47.937 0L40.562 14.28L33.187 0H24.937L36.562 30H44.812L56.437 0H47.937ZM17.5 0L10.125 14.28L2.75 0H0L9.375 30H17.5L26.875 0H17.5Z" fill="#E50914"/>
+                </svg>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#" onclick="selectM3UFiles()">Cargar M3U</a></li>
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Series</a></li>
+                <li><a href="#">Películas</a></li>
+                <li><a href="#">Novedades populares</a></li>
+                <li><a href="#">Mi lista</a></li>
+            </ul>
+        </div>
+        <div class="nav-right">
+            <div class="search-icon">🔍</div>
+            <div class="notifications">🔔</div>
+            <div class="profile">👤</div>
+        </div>
+    </header>
+
+    <!-- Banner principal -->
+    <section class="banner">
+        <div class="banner-content">
+            <h1 class="banner-title" id="banner-title">Bienvenido a Netflix Clone</h1>
+            <p class="banner-description" id="banner-description">Carga tus archivos M3U para comenzar a ver tu contenido favorito.</p>
+            <div class="banner-buttons">
+                <button class="banner-button play-button" id="banner-play">▶ Reproducir</button>
+                <button class="banner-button info-button" id="banner-info">ⓘ Más información</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Secciones de contenido -->
+    <section class="content-section">
+        <h2 class="section-title">Tus series</h2>
+        <div class="carousel">
+            <div class="carousel-container" id="series-carousel">
+                <!-- Las series cargadas desde M3U aparecerán aquí -->
+            </div>
+            <div class="carousel-nav prev" onclick="moveCarousel('series-carousel', -1)">‹</div>
+            <div class="carousel-nav next" onclick="moveCarousel('series-carousel', 1)">›</div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <h2 class="section-title">Continuar viendo</h2>
+        <div class="carousel">
+            <div class="carousel-container" id="continue-carousel">
+                <!-- Elementos del carrusel generados con JS -->
+            </div>
+            <div class="carousel-nav prev" onclick="moveCarousel('continue-carousel', -1)">‹</div>
+            <div class="carousel-nav next" onclick="moveCarousel('continue-carousel', 1)">›</div>
+        </div>
+    </section>
+
+    <!-- Modal de detalles de serie -->
+    <div class="modal" id="series-modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-header">
+                <div class="modal-close" id="modal-close">×</div>
+            </div>
+            <div class="modal-body">
+                <h2 class="modal-title" id="modal-title">Título de la serie</h2>
+                <div class="modal-info">
+                    <span class="modal-rating" id="modal-rating">96% de coincidencia</span>
+                    <span class="modal-year" id="modal-year">2024</span>
+                    <span class="modal-seasons" id="modal-seasons">2 Temporadas</span>
+                </div>
+                <p class="modal-description" id="modal-description">Descripción de la serie.</p>
+                <div class="banner-buttons">
+                    <button class="banner-button play-button" id="modal-play">▶ Reproducir</button>
+                    <button class="banner-button info-button">+ Mi lista</button>
+                </div>
+                
+                <div class="seasons-container" id="seasons-container">
+                    <!-- Las temporadas y episodios se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reproductor de video mejorado -->
+    <div class="video-player" id="video-player">
+        <div class="video-container">
+            <div class="video-title" id="video-title">Título del episodio</div>
+            <video id="video-element"></video>
+            <div class="video-controls" id="video-controls">
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-buffered" id="progress-buffered"></div>
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="controls-top">
+                    <div class="video-controls-left">
+                        <button class="control-button" id="play-pause-btn">⏸️</button>
+                        <button class="control-button" id="backward-btn">⏪</button>
+                        <button class="control-button" id="forward-btn">⏩</button>
+                        <div class="volume-container">
+                            <button class="control-button" id="volume-btn">🔊</button>
+                            <div class="volume-slider" id="volume-slider">
+                                <div class="volume-fill" id="volume-fill"></div>
+                            </div>
+                        </div>
+                        <div class="time-display">
+                            <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                        </div>
+                    </div>
+                    <div class="video-controls-right">
+                        <button class="control-button" id="speed-btn">1x</button>
+                        <button class="control-button" id="fullscreen-btn">⛶</button>
+                    </div>
+                </div>
+            </div>
+            <div class="video-close" id="video-close">×</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="social-links">
+            <a href="#">📘</a>
+            <a href="#">🐦</a>
+            <a href="#">📷</a>
+        </div>
+        <div class="footer-links">
+            <a href="#">Audio y subtítulos</a>
+            <a href="#">Zona de prensa</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Contáctanos</a>
+            <a href="#">Descripción de audio</a>
+            <a href="#">Relaciones con inversionistas</a>
+            <a href="#">Avisos legales</a>
+            <a href="#">Centro de ayuda</a>
+            <a href="#">Empleo</a>
+            <a href="#">Preferencias de cookies</a>
+            <a href="#">Tarjetas de regalo</a>
+            <a href="#">Términos de uso</a>
+            <a href="#">Información corporativa</a>
+        </div>
+        <button class="service-code">Código de servicio</button>
+        <div class="copyright">© 1997-2024 Netflix, Inc.</div>
+    </footer>
+
+    <script>
+        // Variables globales
+        let seriesData = [];
+        let currentSeries = null;
+        let currentBannerSeries = null;
+        let currentVideo = null;
+        let watchingProgress = {}; // Almacenar progreso de visualización
+        let playbackSpeed = 1;
+
+        // Datos de ejemplo
+        const movieData = [
+            { title: "Stranger Things", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Stranger Things</text></svg>" },
+            { title: "The Witcher", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>The Witcher</text></svg>" },
+            { title: "Breaking Bad", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Breaking Bad</text></svg>" },
+            { title: "Dark", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Dark</text></svg>" },
+            { title: "The Crown", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>The Crown</text></svg>" }
+        ];
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            setupVideoControls();
+            updateBanner();
+            updateContinueCarousel();
+            
+            // Efecto de scroll en el header
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('.header');
+                if (window.scrollY > 100) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            const fileInput = document.getElementById('m3u-files');
+            
+            fileInput.addEventListener('change', function() {
+                for (let f of Array.from(this.files)) {
+                    if (f.name.endsWith('.m3u') || f.name.endsWith('.m3u8')) {
+                        processM3UFile(f);
+                    }
+                }
+            });
+            
+            // Cerrar modal
+            document.getElementById('modal-close').addEventListener('click', function() {
+                document.getElementById('series-modal').style.display = 'none';
+            });
+            
+            // Cerrar reproductor de video
+            document.getElementById('video-close').addEventListener('click', function() {
+                closeVideoPlayer();
+            });
+        }
+
+        // Configurar controles del reproductor de video
+        function setupVideoControls() {
+            const video = document.getElementById('video-element');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const backwardBtn = document.getElementById('backward-btn');
+            const forwardBtn = document.getElementById('forward-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressBuffered = document.getElementById('progress-buffered');
+            const currentTimeElement = document.getElementById('current-time');
+            const durationElement = document.getElementById('duration');
+            const volumeBtn = document.getElementById('volume-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeFill = document.getElementById('volume-fill');
+            const speedBtn = document.getElementById('speed-btn');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const videoControls = document.getElementById('video-controls');
+            const videoTitle = document.getElementById('video-title');
+            
+            let controlsTimeout;
+            
+            // Mostrar/ocultar controles al mover el mouse
+            document.getElementById('video-player').addEventListener('mousemove', function() {
+                videoControls.classList.remove('hidden');
+                videoTitle.classList.remove('hidden');
+                clearTimeout(controlsTimeout);
+                controlsTimeout = setTimeout(() => {
+                    if (!video.paused) {
+                        videoControls.classList.add('hidden');
+                        videoTitle.classList.add('hidden');
+                    }
+                }, 3000);
+            });
+            
+            // Botón play/pause
+            playPauseBtn.addEventListener('click', function() {
+                if (video.paused) {
+                    video.play();
+                    playPauseBtn.innerHTML = '⏸️';
+                } else {
+                    video.pause();
+                    playPauseBtn.innerHTML = '▶️';
+                }
+            });
+            
+            // Retroceder 10 segundos
+            backwardBtn.addEventListener('click', function() {
+                video.currentTime -= 10;
+            });
+            
+            // Adelantar 10 segundos
+            forwardBtn.addEventListener('click', function() {
+                video.currentTime += 10;
+            });
+            
+            // Control de volumen
+            volumeBtn.addEventListener('click', function() {
+                if (video.muted || video.volume === 0) {
+                    video.muted = false;
+                    video.volume = 1;
+                    volumeFill.style.width = '100%';
+                    volumeBtn.innerHTML = '🔊';
+                } else {
+                    video.muted = true;
+                    volumeFill.style.width = '0%';
+                    volumeBtn.innerHTML = '🔇';
+                }
+            });
+            
+            // Slider de volumen
+            volumeSlider.addEventListener('click', function(e) {
+                const rect = volumeSlider.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                video.volume = Math.max(0, Math.min(1, percent));
+                volumeFill.style.width = `${percent * 100}%`;
+                video.muted = false;
+                volumeBtn.innerHTML = video.volume === 0 ? '🔇' : '🔊';
+            });
+            
+            // Control de velocidad
+            speedBtn.addEventListener('click', function() {
+                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                const currentIndex = speeds.indexOf(playbackSpeed);
+                const nextIndex = (currentIndex + 1) % speeds.length;
+                playbackSpeed = speeds[nextIndex];
+                video.playbackRate = playbackSpeed;
+                speedBtn.textContent = playbackSpeed + 'x';
+            });
+            
+            // Actualizar progreso
+            video.addEventListener('timeupdate', function() {
+                const percent = (video.currentTime / video.duration) * 100;
+                progressFill.style.width = `${percent}%`;
+                
+                currentTimeElement.textContent = formatTime(video.currentTime);
+                durationElement.textContent = formatTime(video.duration);
+                
+                // Guardar progreso
+                if (currentVideo) {
+                    const progressKey = `${currentVideo.seriesTitle}_S${currentVideo.episode.season}E${currentVideo.episode.episode}`;
+                    watchingProgress[progressKey] = {
+                        currentTime: video.currentTime,
+                        duration: video.duration,
+                        percent: percent,
+                        episode: currentVideo.episode,
+                        seriesTitle: currentVideo.seriesTitle,
+                        timestamp: Date.now()
+                    };
+                    updateContinueCarousel();
+                }
+            });
+            
+            // Actualizar buffer
+            video.addEventListener('progress', function() {
+                if (video.buffered.length > 0) {
+                    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                    const duration = video.duration;
+                    if (duration > 0) {
+                        progressBuffered.style.width = `${(bufferedEnd / duration) * 100}%`;
+                    }
+                }
+            });
+            
+            // Click en la barra de progreso
+            progressContainer.addEventListener('click', function(e) {
+                const rect = progressContainer.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                video.currentTime = percent * video.duration;
+            });
+            
+            // Botón de pantalla completa
+            fullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    document.getElementById('video-player').requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+            
+            // Eventos de video
+            video.addEventListener('play', function() {
+                playPauseBtn.innerHTML = '⏸️';
+            });
+            
+            video.addEventListener('pause', function() {
+                playPauseBtn.innerHTML = '▶️';
+            });
+            
+            // Eventos de teclado
+            document.addEventListener('keydown', function(e) {
+                if (document.getElementById('video-player').style.display === 'block') {
+                    switch(e.key) {
+                        case ' ':
+                        case 'k':
+                            e.preventDefault();
+                            playPauseBtn.click();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            fullscreenBtn.click();
+                            break;
+                        case 'm':
+                            e.preventDefault();
+                            volumeBtn.click();
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            backwardBtn.click();
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            forwardBtn.click();
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            video.volume = Math.min(1, video.volume + 0.1);
+                            volumeFill.style.width = `${video.volume * 100}%`;
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            video.volume = Math.max(0, video.volume - 0.1);
+                            volumeFill.style.width = `${video.volume * 100}%`;
+                            break;
+                    }
+                }
+            });
+        }
+
+        // Formatear tiempo en MM:SS o HH:MM:SS
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hours > 0) {
+                return `${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            } else {
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+        }
+
+        // Función para seleccionar archivos M3U
+        function selectM3UFiles() {
+            document.getElementById('m3u-files').click();
+        }
+
+        // Procesar archivo M3U
+        function processM3UFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const series = parseM3UContent(content, file.name);
+                if (series && series.seasons) {
+                    seriesData.push(series);
+                    updateSeriesCarousel();
+                    updateBanner();
+                    updateContinueCarousel();
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Parsear contenido M3U - MEJORADO
+        function parseM3UContent(content, fileName) {
+            const lines = content.split('\n');
+            let episodes = [];
+            let firstLogo = '';
+            
+            // Primero, recolectar todos los episodios
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF:')) {
+                    const urlLine = lines[i + 1] ? lines[i + 1].trim() : '';
+                    
+                    if (urlLine && !urlLine.startsWith('#')) {
+                        // Extraer información del EXTINF
+                        let title = '';
+                        let logo = '';
+                        
+                        // Intentar múltiples formatos de parsing
+                        // Formato 1: #EXTINF:-1 tvg-logo="..." group-title="...",Título
+                        const format1Match = line.match(/#EXTINF:[^,]*,(.+)$/);
+                        if (format1Match) {
+                            title = format1Match[1].trim();
+                        }
+                        
+                        // Extraer logo
+                        const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                        if (logoMatch) {
+                            logo = logoMatch[1];
+                            if (!firstLogo) firstLogo = logo;
+                        }
+                        
+                        // Limpiar el título de caracteres especiales innecesarios
+                        title = title.replace(/[\[\]]/g, '').trim();
+                        
+                        if (title) {
+                            episodes.push({
+                                title: title,
+                                logo: logo,
+                                url: urlLine,
+                                originalLine: line
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Organizar episodios en temporadas
+            const seasons = organizeSeasonsFromEpisodes(episodes);
+            
+            // Determinar el título de la serie
+            const seriesTitle = extractSeriesTitle(fileName, episodes);
+            
+            return {
+                title: seriesTitle,
+                description: `Serie con ${episodes.length} episodios`,
+                image: firstLogo || createPlaceholderImage(seriesTitle),
+                seasons: seasons,
+                totalEpisodes: episodes.length
+            };
+        }
+
+        // Organizar episodios en temporadas de manera inteligente
+        function organizeSeasonsFromEpisodes(episodes) {
+            const seasons = {};
+            let currentSeason = 1;
+            let episodeInSeason = 0;
+            
+            episodes.forEach((episode, index) => {
+                const title = episode.title.toUpperCase();
+                
+                // Detectar marcadores de temporada
+                const seasonMarkers = [
+                    /TEMPORADA\s*(\d+)/i,
+                    /TEMP\s*(\d+)/i,
+                    /T(\d+)/,
+                    /S(\d+)/,
+                    /SEASON\s*(\d+)/i,
+                    /\s+(\d+)x\d+/  // Formato 1x01, 2x01, etc.
+                ];
+                
+                let detectedSeason = null;
+                for (const marker of seasonMarkers) {
+                    const match = title.match(marker);
+                    if (match) {
+                        detectedSeason = parseInt(match[1]);
+                        break;
+                    }
+                }
+                
+                // Si se detecta una nueva temporada
+                if (detectedSeason && detectedSeason !== currentSeason) {
+                    currentSeason = detectedSeason;
+                    episodeInSeason = 0;
+                }
+                
+                // Detectar número de episodio
+                const episodeMarkers = [
+                    /CAP[ÍI]?TULO?\s*(\d+)/i,
+                    /CAP\s*(\d+)/i,
+                    /EP[ISODIO]*\s*(\d+)/i,
+                    /E(\d+)/,
+                    /\d+x(\d+)/,  // Formato 1x01
+                    /\s+(\d+)\s*$/  // Número al final
+                ];
+                
+                let detectedEpisode = null;
+                for (const marker of episodeMarkers) {
+                    const match = title.match(marker);
+                    if (match) {
+                        detectedEpisode = parseInt(match[1]);
+                        break;
+                    }
+                }
+                
+                // Si no se detecta número, usar contador
+                episodeInSeason++;
+                const episodeNumber = detectedEpisode || episodeInSeason;
+                
+                // Inicializar temporada si no existe
+                if (!seasons[currentSeason]) {
+                    seasons[currentSeason] = [];
+                }
+                
+                // Agregar episodio a la temporada
+                seasons[currentSeason].push({
+                    ...episode,
+                    season: currentSeason,
+                    episode: episodeNumber,
+                    cleanTitle: cleanEpisodeTitle(episode.title)
+                });
+            });
+            
+            // Si no se detectaron temporadas, poner todo en temporada 1
+            if (Object.keys(seasons).length === 0 && episodes.length > 0) {
+                seasons[1] = episodes.map((ep, idx) => ({
+                    ...ep,
+                    season: 1,
+                    episode: idx + 1,
+                    cleanTitle: cleanEpisodeTitle(ep.title)
+                }));
+            }
+            
+            return seasons;
+        }
+
+        // Limpiar título de episodio
+        function cleanEpisodeTitle(title) {
+            // Remover información de temporada/episodio del título
+            let clean = title;
+            
+            // Remover patrones comunes
+            clean = clean.replace(/^(TEMPORADA|TEMP|T|S)\s*\d+\s*/i, '');
+            clean = clean.replace(/^(CAP[ÍI]?TULO?|CAP|EP[ISODIO]*|E)\s*\d+\s*/i, '');
+            clean = clean.replace(/^\d+x\d+\s*[-:]?\s*/i, '');
+            clean = clean.replace(/^\d+\s*[-:]?\s*/i, '');
+            
+            return clean.trim() || title;
+        }
+
+        // Extraer título de la serie
+        function extractSeriesTitle(fileName, episodes) {
+            // Intentar extraer del nombre del archivo
+            let seriesTitle = fileName.replace(/\.m3u8?$/i, '').replace(/[_-]/g, ' ').trim();
+            
+            // Si el nombre del archivo es genérico, intentar extraer de los episodios
+            if (seriesTitle.toLowerCase() === 'playlist' || seriesTitle.toLowerCase() === 'lista' || !seriesTitle) {
+                // Buscar patrones comunes en los títulos de episodios
+                if (episodes.length > 0) {
+                    const firstTitle = episodes[0].title;
+                    // Intentar extraer el nombre de la serie del primer episodio
+                    const seriesMatch = firstTitle.match(/^([^-–]+?)(?:\s*[-–]|\s+(?:TEMPORADA|TEMP|T|S)\s*\d+)/i);
+                    if (seriesMatch) {
+                        seriesTitle = seriesMatch[1].trim();
+                    }
+                }
+            }
+            
+            return seriesTitle || 'Serie sin título';
+        }
+
+        // Crear imagen placeholder
+        function createPlaceholderImage(title) {
+            const colors = ['#e50914', '#333', '#444', '#555', '#666'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='${color}'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>${encodeURIComponent(title)}</text></svg>`;
+        }
+
+        // Actualizar banner con serie random
+        function updateBanner() {
+            if (seriesData.length === 0) return;
+            
+            const randomIndex = Math.floor(Math.random() * seriesData.length);
+            currentBannerSeries = seriesData[randomIndex];
+            
+            const banner = document.querySelector('.banner');
+            const bannerTitle = document.getElementById('banner-title');
+            const bannerDesc = document.getElementById('banner-description');
+            
+            bannerTitle.textContent = currentBannerSeries.title;
+            bannerDesc.textContent = currentBannerSeries.description;
+            
+            if (currentBannerSeries.image && !currentBannerSeries.image.includes('svg')) {
+                banner.style.background = `linear-gradient(to top, #141414, transparent 50%), linear-gradient(to right, #141414, transparent 30%), url('${currentBannerSeries.image}')`;
+            }
+            
+            banner.style.backgroundSize = 'cover';
+            banner.style.backgroundPosition = 'center';
+            
+            // Configurar botones del banner
+            document.getElementById('banner-play').onclick = function() {
+                playFirstEpisode(currentBannerSeries);
+            };
+            
+            document.getElementById('banner-info').onclick = function() {
+                openSeriesModal(currentBannerSeries);
+            };
+        }
+
+        // Reproducir primer episodio de una serie
+        function playFirstEpisode(series) {
+            const firstSeason = Object.keys(series.seasons).find(s => series.seasons[s] && series.seasons[s].length > 0);
+            if (firstSeason && series.seasons[firstSeason].length > 0) {
+                playEpisode(series.seasons[firstSeason][0], series.title);
+            }
+        }
+
+        // Actualizar carrusel de series
+        function updateSeriesCarousel() {
+            const carousel = document.getElementById('series-carousel');
+            carousel.innerHTML = '';
+            
+            seriesData.forEach(series => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item';
+                item.addEventListener('click', function() {
+                    openSeriesModal(series);
+                });
+                
+                const img = document.createElement('img');
+                img.src = series.image;
+                img.alt = series.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(series.title);
+                };
+                
+                item.appendChild(img);
+                carousel.appendChild(item);
+            });
+        }
+
+        // Actualizar carrusel continuar viendo
+        function updateContinueCarousel() {
+            const carousel = document.getElementById('continue-carousel');
+            carousel.innerHTML = '';
+            
+            // Obtener episodios en progreso ordenados por timestamp
+            const inProgress = Object.values(watchingProgress)
+                .filter(p => p.percent > 0 && p.percent < 95)
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .slice(0, 10);
+            
+            if (inProgress.length > 0) {
+                inProgress.forEach(progress => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    item.addEventListener('click', function() {
+                        resumeEpisode(progress);
+                    });
+                    
+                    const img = document.createElement('img');
+                    img.src = progress.episode.logo || createPlaceholderImage(progress.episode.cleanTitle || progress.episode.title);
+                    img.alt = progress.episode.title;
+                    
+                    const progressWrapper = document.createElement('div');
+                    progressWrapper.className = 'progress-bar-wrapper';
+                    
+                    const progressFill = document.createElement('div');
+                    progressFill.className = 'progress-bar-fill';
+                    progressFill.style.width = `${progress.percent}%`;
+                    
+                    progressWrapper.appendChild(progressFill);
+                    item.appendChild(img);
+                    item.appendChild(progressWrapper);
+                    carousel.appendChild(item);
+                });
+            } else if (seriesData.length === 0) {
+                // Mostrar ejemplos si no hay series
+                movieData.forEach(movie => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    
+                    const img = document.createElement('img');
+                    img.src = movie.image;
+                    img.alt = movie.title;
+                    
+                    item.appendChild(img);
+                    carousel.appendChild(item);
+                });
+            }
+        }
+
+        // Reanudar episodio
+        function resumeEpisode(progress) {
+            playEpisode(progress.episode, progress.seriesTitle, progress.currentTime);
+        }
+
+        // Abrir modal de serie
+        function openSeriesModal(series) {
+            currentSeries = series;
+            
+            // Actualizar contenido del modal
+            document.getElementById('modal-title').textContent = series.title;
+            document.getElementById('modal-description').textContent = series.description;
+            
+            const modalHeader = document.getElementById('modal-header');
+            if (series.image && !series.image.includes('svg')) {
+                modalHeader.style.backgroundImage = `url(${series.image})`;
+            } else {
+                modalHeader.style.background = '#333';
+            }
+            
+            // Actualizar información de temporadas
+            const seasonsContainer = document.getElementById('seasons-container');
+            seasonsContainer.innerHTML = '';
+            
+            // Contar temporadas con episodios
+            let seasonCount = 0;
+            for (const key in series.seasons) {
+                if (series.seasons[key] && series.seasons[key].length > 0) seasonCount++;
+            }
+            document.getElementById('modal-seasons').textContent = `${seasonCount} Temporada${seasonCount > 1 ? 's' : ''}`;
+            
+            // Crear secciones para cada temporada
+            for (const seasonNum in series.seasons) {
+                const season = series.seasons[seasonNum];
+                if (season && season.length > 0) {
+                    const seasonSection = document.createElement('div');
+                    seasonSection.className = 'season-section';
+                    
+                    const seasonTitle = document.createElement('h3');
+                    seasonTitle.className = 'season-title';
+                    seasonTitle.textContent = `Temporada ${seasonNum}`;
+                    seasonSection.appendChild(seasonTitle);
+                    
+                    const episodesGrid = document.createElement('div');
+                    episodesGrid.className = 'episodes-grid';
+                    
+                    season.forEach(episode => {
+                        const episodeCard = document.createElement('div');
+                        episodeCard.className = 'episode-card';
+                        episodeCard.addEventListener('click', function() {
+                            playEpisode(episode, series.title);
+                        });
+                        
+                        const episodeImage = document.createElement('div');
+                        episodeImage.className = 'episode-image';
+                        
+                        if (episode.logo && !episode.logo.includes('svg')) {
+                            episodeImage.innerHTML = `<img src="${episode.logo}" alt="${episode.title}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div>Ep ${episode.episode}</div>'">`;
+                        } else {
+                            episodeImage.innerHTML = `<div>Ep ${episode.episode}</div>`;
+                        }
+                        
+                        const episodeInfo = document.createElement('div');
+                        episodeInfo.className = 'episode-info';
+                        
+                        const episodeNumber = document.createElement('div');
+                        episodeNumber.className = 'episode-number';
+                        episodeNumber.textContent = `Episodio ${episode.episode}`;
+                        
+                        const episodeName = document.createElement('div');
+                        episodeName.className = 'episode-name';
+                        episodeName.textContent = episode.cleanTitle || episode.title;
+                        
+                        episodeInfo.appendChild(episodeNumber);
+                        episodeInfo.appendChild(episodeName);
+                        
+                        episodeCard.appendChild(episodeImage);
+                        episodeCard.appendChild(episodeInfo);
+                        
+                        episodesGrid.appendChild(episodeCard);
+                    });
+                    
+                    seasonSection.appendChild(episodesGrid);
+                    seasonsContainer.appendChild(seasonSection);
+                }
+            }
+            
+            // Mostrar modal
+            document.getElementById('series-modal').style.display = 'block';
+            
+            // Configurar botón de reproducción
+            document.getElementById('modal-play').onclick = function() {
+                playFirstEpisode(series);
+            };
+        }
+
+        // Reproducir episodio
+        function playEpisode(episode, seriesTitle, startTime = 0) {
+            const videoPlayer = document.getElementById('video-player');
+            const videoElement = document.getElementById('video-element');
+            const videoTitle = document.getElementById('video-title');
+            
+            currentVideo = {
+                episode: episode,
+                seriesTitle: seriesTitle
+            };
+            
+            videoElement.src = episode.url;
+            videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
+            videoPlayer.style.display = 'block';
+            
+            // Cerrar modal si está abierto
+            document.getElementById('series-modal').style.display = 'none';
+            
+            // Configurar tiempo de inicio si es necesario
+            if (startTime > 0) {
+                videoElement.currentTime = startTime;
+            }
+            
+            // Reproducir video
+            videoElement.play();
+            document.getElementById('play-pause-btn').innerHTML = '⏸️';
+        }
+
+        // Cerrar reproductor de video
+        function closeVideoPlayer() {
+            const videoPlayer = document.getElementById('video-player');
+            const videoElement = document.getElementById('video-element');
+            
+            videoPlayer.style.display = 'none';
+            videoElement.pause();
+            videoElement.src = '';
+            
+            // Reiniciar velocidad
+            playbackSpeed = 1;
+            videoElement.playbackRate = 1;
+            document.getElementById('speed-btn').textContent = '1x';
+            
+            // Salir de pantalla completa si está activa
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        }
+
+        // Función para mover el carrusel
+        function moveCarousel(carouselId, direction) {
+            const container = document.getElementById(carouselId);
+            const scrollAmount = container.offsetWidth * 0.8 * direction;
+            container.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>
