@@ -47,12 +47,25 @@
         }
         
         .logo {
-            height: 25px;
+            display: flex;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .logo span {
+            color: #E50914;
+        }
+        
+        .nav-left {
+            display: flex;
+            align-items: center;
         }
         
         .nav-links {
             display: flex;
             list-style: none;
+            margin-left: 30px;
         }
         
         .nav-links li {
@@ -189,7 +202,26 @@
         
         .carousel-item img {
             width: 100%;
+            height: 450px; /* Altura fija */
+            object-fit: cover; /* Para mantener la relación de aspecto */
             display: block;
+        }
+        
+        .carousel-item.in-mylist::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #E50914;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 2;
         }
         
         .progress-bar-wrapper {
@@ -232,6 +264,124 @@
         
         .carousel-nav.next {
             right: 0;
+        }
+        
+        /* Vista horizontal de series (solo en Mi Lista) */
+        .horizontal-list {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .horizontal-item {
+            display: flex;
+            background-color: #2f2f2f;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s, background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .horizontal-item:hover {
+            transform: translateY(-5px);
+            background-color: #3a3a3a;
+        }
+        
+        .horizontal-item-image {
+            width: 150px;
+            height: 200px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .horizontal-item.in-mylist::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #E50914;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 2;
+        }
+        
+        .horizontal-item-content {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        
+        .horizontal-item-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .horizontal-item-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .horizontal-item-rating {
+            color: #46d369;
+            font-weight: bold;
+        }
+        
+        .horizontal-item-description {
+            margin-bottom: 15px;
+            line-height: 1.5;
+            color: #d2d2d2;
+        }
+        
+        .horizontal-item-seasons {
+            margin-bottom: 15px;
+        }
+        
+        .horizontal-item-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .horizontal-item-button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        
+        .horizontal-item-button:hover {
+            opacity: 0.8;
+        }
+        
+        /* Botón de cambio de vista (solo en Mi Lista) */
+        .view-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        
+        .view-toggle-button {
+            background-color: #333;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .view-toggle-button:hover {
+            background-color: #444;
         }
         
         /* Modal de detalles de serie */
@@ -360,6 +510,29 @@
         .episode-name {
             font-size: 1rem;
             font-weight: bold;
+        }
+        
+        /* Sección Mi Lista */
+        #mylist-section {
+            display: none;
+            padding: 50px;
+            margin-top: 100px;
+        }
+        
+        #mylist-back {
+            background: none;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        #mylist-back:hover {
+            background: #333;
         }
         
         /* Reproductor de video mejorado */
@@ -596,6 +769,19 @@
                 min-width: calc(33.33% - 4px);
             }
             
+            .carousel-item img {
+                height: 300px; /* Altura reducida en móviles */
+            }
+            
+            .horizontal-item {
+                flex-direction: column;
+            }
+            
+            .horizontal-item-image {
+                width: 100%;
+                height: 200px;
+            }
+            
             .episodes-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
@@ -618,17 +804,15 @@
     <header class="header">
         <div class="nav-left">
             <a href="#" class="logo">
-                <svg width="92" height="25" viewBox="0 0 111 30" fill="none">
-                    <path d="M105.062 14.28L111 30C107.249 29.755 104.062 29.436 100.782 29.436C97.593 29.436 94.124 29.755 90.374 30L96.937 14.28C98.593 9.72 100.782 4.14 100.782 4.14C100.782 4.14 102.406 9.72 105.062 14.28ZM77.5 0L70.125 14.28L62.75 0H54.5L66.125 30H74.375L86 0H77.5ZM47.937 0L40.562 14.28L33.187 0H24.937L36.562 30H44.812L56.437 0H47.937ZM17.5 0L10.125 14.28L2.75 0H0L9.375 30H17.5L26.875 0H17.5Z" fill="#E50914"/>
-                </svg>
+                <span>NefliClon</span>
             </a>
             <ul class="nav-links">
                 <li><a href="#" onclick="selectM3UFiles()">Cargar M3U</a></li>
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Series</a></li>
-                <li><a href="#">Películas</a></li>
-                <li><a href="#">Novedades populares</a></li>
-                <li><a href="#">Mi lista</a></li>
+                <li><a href="#" onclick="showHome()">Inicio</a></li>
+                <li><a href="#" onclick="showHome()">Series</a></li>
+                <li><a href="#" onclick="showHome()">Películas</a></li>
+                <li><a href="#" onclick="showHome()">Novedades populares</a></li>
+                <li><a href="#" onclick="showMyList()">Mi lista</a></li>
             </ul>
         </div>
         <div class="nav-right">
@@ -639,9 +823,9 @@
     </header>
 
     <!-- Banner principal -->
-    <section class="banner">
+    <section class="banner" id="banner-section">
         <div class="banner-content">
-            <h1 class="banner-title" id="banner-title">Bienvenido a Netflix Clone</h1>
+            <h1 class="banner-title" id="banner-title">Bienvenido a NefliClon</h1>
             <p class="banner-description" id="banner-description">Carga tus archivos M3U para comenzar a ver tu contenido favorito.</p>
             <div class="banner-buttons">
                 <button class="banner-button play-button" id="banner-play">▶ Reproducir</button>
@@ -651,18 +835,20 @@
     </section>
 
     <!-- Secciones de contenido -->
-    <section class="content-section">
+    <section class="content-section" id="series-section">
         <h2 class="section-title">Tus series</h2>
-        <div class="carousel">
+        
+        <!-- Vista carrusel (cuadrícula) -->
+        <div class="carousel" id="series-carousel-container">
             <div class="carousel-container" id="series-carousel">
-                <!-- Las series cargadas desde M3U aparecerán aquí -->
+                <!-- Las series cargadas desde M3U aparecerán aquí en formato cuadrícula -->
             </div>
             <div class="carousel-nav prev" onclick="moveCarousel('series-carousel', -1)">‹</div>
             <div class="carousel-nav next" onclick="moveCarousel('series-carousel', 1)">›</div>
         </div>
     </section>
 
-    <section class="content-section">
+    <section class="content-section" id="continue-section">
         <h2 class="section-title">Continuar viendo</h2>
         <div class="carousel">
             <div class="carousel-container" id="continue-carousel">
@@ -670,6 +856,29 @@
             </div>
             <div class="carousel-nav prev" onclick="moveCarousel('continue-carousel', -1)">‹</div>
             <div class="carousel-nav next" onclick="moveCarousel('continue-carousel', 1)">›</div>
+        </div>
+    </section>
+
+    <!-- Sección Mi Lista -->
+    <section id="mylist-section">
+        <button id="mylist-back" onclick="showHome()">← Volver al inicio</button>
+        <div class="view-toggle">
+            <button class="view-toggle-button" id="view-toggle">Cambiar a vista cuadrícula</button>
+        </div>
+        <h2 class="section-title">Mi lista</h2>
+        
+        <!-- Vista horizontal (por defecto en Mi Lista) -->
+        <div class="horizontal-list" id="mylist-horizontal">
+            <!-- Las series en Mi Lista aparecerán aquí en formato horizontal -->
+        </div>
+        
+        <!-- Vista carrusel (cuadrícula) -->
+        <div class="carousel" id="mylist-carousel-container">
+            <div class="carousel-container" id="mylist-carousel">
+                <!-- Las series en Mi Lista aparecerán aquí en formato cuadrícula -->
+            </div>
+            <div class="carousel-nav prev" onclick="moveCarousel('mylist-carousel', -1)">‹</div>
+            <div class="carousel-nav next" onclick="moveCarousel('mylist-carousel', 1)">›</div>
         </div>
     </section>
 
@@ -689,7 +898,7 @@
                 <p class="modal-description" id="modal-description">Descripción de la serie.</p>
                 <div class="banner-buttons">
                     <button class="banner-button play-button" id="modal-play">▶ Reproducir</button>
-                    <button class="banner-button info-button">+ Mi lista</button>
+                    <button class="banner-button info-button" id="mylist-button">+ Mi lista</button>
                 </div>
                 
                 <div class="seasons-container" id="seasons-container">
@@ -757,33 +966,55 @@
             <a href="#">Información corporativa</a>
         </div>
         <button class="service-code">Código de servicio</button>
-        <div class="copyright">© 1997-2024 Netflix, Inc.</div>
+        <div class="copyright">© 1997-2025 NefliClon, Inc.</div>
     </footer>
 
     <script>
         // Variables globales
         let seriesData = [];
+        let myList = [];
         let currentSeries = null;
         let currentBannerSeries = null;
         let currentVideo = null;
-        let watchingProgress = {}; // Almacenar progreso de visualización
+        let continueWatching = []; // Lista simplificada para continuar viendo
         let playbackSpeed = 1;
+        let currentView = 'horizontal'; // Vista por defecto en Mi Lista
 
-        // Datos de ejemplo
-        const movieData = [
-            { title: "Stranger Things", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Stranger Things</text></svg>" },
-            { title: "The Witcher", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>The Witcher</text></svg>" },
-            { title: "Breaking Bad", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Breaking Bad</text></svg>" },
-            { title: "Dark", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>Dark</text></svg>" },
-            { title: "The Crown", image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='%23333'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>The Crown</text></svg>" }
-        ];
+        // Función para guardar datos en localStorage
+        function saveData() {
+            localStorage.setItem('nefliclon_series', JSON.stringify(seriesData));
+            localStorage.setItem('nefliclon_mylist', JSON.stringify(myList));
+            localStorage.setItem('nefliclon_continue', JSON.stringify(continueWatching));
+        }
 
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', function() {
+            // Cargar desde localStorage
+            const savedSeries = localStorage.getItem('nefliclon_series');
+            if (savedSeries) {
+                seriesData = JSON.parse(savedSeries);
+                updateSeriesCarousel();
+                updateMyListViews();
+                updateBanner();
+            }
+            
+            const savedMyList = localStorage.getItem('nefliclon_mylist');
+            if (savedMyList) {
+                myList = JSON.parse(savedMyList);
+            }
+            
+            const savedContinue = localStorage.getItem('nefliclon_continue');
+            if (savedContinue) {
+                continueWatching = JSON.parse(savedContinue);
+                updateContinueCarousel();
+            }
+            
             setupEventListeners();
             setupVideoControls();
-            updateBanner();
             updateContinueCarousel();
+            
+            // Establecer vista por defecto en Mi Lista
+            setMyListView(currentView);
             
             // Efecto de scroll en el header
             window.addEventListener('scroll', function() {
@@ -817,6 +1048,38 @@
             document.getElementById('video-close').addEventListener('click', function() {
                 closeVideoPlayer();
             });
+            
+            // Botón de cambio de vista (solo en Mi Lista)
+            document.getElementById('view-toggle').addEventListener('click', function() {
+                toggleMyListView();
+            });
+        }
+
+        // Cambiar entre vistas en Mi Lista
+        function toggleMyListView() {
+            if (currentView === 'horizontal') {
+                setMyListView('grid');
+            } else {
+                setMyListView('horizontal');
+            }
+        }
+
+        // Establecer vista específica en Mi Lista
+        function setMyListView(view) {
+            currentView = view;
+            const horizontalList = document.getElementById('mylist-horizontal');
+            const carouselContainer = document.getElementById('mylist-carousel-container');
+            const toggleButton = document.getElementById('view-toggle');
+            
+            if (view === 'horizontal') {
+                horizontalList.style.display = 'flex';
+                carouselContainer.style.display = 'none';
+                toggleButton.textContent = 'Cambiar a vista cuadrícula';
+            } else {
+                horizontalList.style.display = 'none';
+                carouselContainer.style.display = 'block';
+                toggleButton.textContent = 'Cambiar a vista horizontal';
+            }
         }
 
         // Configurar controles del reproductor de video
@@ -915,20 +1178,6 @@
                 
                 currentTimeElement.textContent = formatTime(video.currentTime);
                 durationElement.textContent = formatTime(video.duration);
-                
-                // Guardar progreso
-                if (currentVideo) {
-                    const progressKey = `${currentVideo.seriesTitle}_S${currentVideo.episode.season}E${currentVideo.episode.episode}`;
-                    watchingProgress[progressKey] = {
-                        currentTime: video.currentTime,
-                        duration: video.duration,
-                        percent: percent,
-                        episode: currentVideo.episode,
-                        seriesTitle: currentVideo.seriesTitle,
-                        timestamp: Date.now()
-                    };
-                    updateContinueCarousel();
-                }
             });
             
             // Actualizar buffer
@@ -1039,15 +1288,17 @@
                 if (series && series.seasons) {
                     seriesData.push(series);
                     updateSeriesCarousel();
+                    updateMyListViews();
                     updateBanner();
                     updateContinueCarousel();
+                    saveData();
                 }
             };
             
             reader.readAsText(file);
         }
 
-        // Parsear contenido M3U - MEJORADO
+        // Parsear contenido M3U - REVERTIDO
         function parseM3UContent(content, fileName) {
             const lines = content.split('\n');
             let episodes = [];
@@ -1109,7 +1360,7 @@
             };
         }
 
-        // Organizar episodios en temporadas de manera inteligente
+        // Organizar episodios en temporadas de manera inteligente - REVERTIDO
         function organizeSeasonsFromEpisodes(episodes) {
             const seasons = {};
             let currentSeason = 1;
@@ -1281,7 +1532,7 @@
             
             seriesData.forEach(series => {
                 const item = document.createElement('div');
-                item.className = 'carousel-item';
+                item.className = `carousel-item ${myList.some(m => m.title === series.title) ? 'in-mylist' : ''}`;
                 item.addEventListener('click', function() {
                     openSeriesModal(series);
                 });
@@ -1298,65 +1549,231 @@
             });
         }
 
-        // Actualizar carrusel continuar viendo
+        // Actualizar vistas de Mi Lista
+        function updateMyListViews() {
+            updateMyListCarousel();
+            updateMyListHorizontal();
+        }
+
+        // Actualizar carrusel de Mi Lista
+        function updateMyListCarousel() {
+            const carousel = document.getElementById('mylist-carousel');
+            carousel.innerHTML = '';
+            
+            myList.forEach(series => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item in-mylist';
+                item.addEventListener('click', function() {
+                    openSeriesModal(series);
+                });
+                
+                const img = document.createElement('img');
+                img.src = series.image;
+                img.alt = series.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(series.title);
+                };
+                
+                item.appendChild(img);
+                carousel.appendChild(item);
+            });
+        }
+
+        // Actualizar lista horizontal de Mi Lista
+        function updateMyListHorizontal() {
+            const horizontalList = document.getElementById('mylist-horizontal');
+            horizontalList.innerHTML = '';
+            
+            myList.forEach(series => {
+                const item = document.createElement('div');
+                item.className = 'horizontal-item in-mylist';
+                item.addEventListener('click', function() {
+                    openSeriesModal(series);
+                });
+                
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'horizontal-item-image';
+                imageDiv.style.backgroundImage = `url(${series.image})`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'horizontal-item-content';
+                
+                const title = document.createElement('h3');
+                title.className = 'horizontal-item-title';
+                title.textContent = series.title;
+                
+                const info = document.createElement('div');
+                info.className = 'horizontal-item-info';
+                
+                const rating = document.createElement('span');
+                rating.className = 'horizontal-item-rating';
+                rating.textContent = '95% de coincidencia';
+                
+                const year = document.createElement('span');
+                year.textContent = '2024';
+                
+                const seasons = document.createElement('span');
+                seasons.textContent = `${Object.keys(series.seasons).length} Temporadas`;
+                
+                info.appendChild(rating);
+                info.appendChild(year);
+                info.appendChild(seasons);
+                
+                const description = document.createElement('p');
+                description.className = 'horizontal-item-description';
+                description.textContent = series.description;
+                
+                const buttons = document.createElement('div');
+                buttons.className = 'horizontal-item-buttons';
+                
+                const playButton = document.createElement('button');
+                playButton.className = 'horizontal-item-button play-button';
+                playButton.textContent = '▶ Reproducir';
+                playButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    playFirstEpisode(series);
+                });
+                
+                const removeButton = document.createElement('button');
+                removeButton.className = 'horizontal-item-button info-button';
+                removeButton.textContent = '✕ Quitar de Mi Lista';
+                removeButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeFromMyList(series);
+                });
+                
+                buttons.appendChild(playButton);
+                buttons.appendChild(removeButton);
+                
+                contentDiv.appendChild(title);
+                contentDiv.appendChild(info);
+                contentDiv.appendChild(description);
+                contentDiv.appendChild(buttons);
+                
+                item.appendChild(imageDiv);
+                item.appendChild(contentDiv);
+                
+                horizontalList.appendChild(item);
+            });
+        }
+
+        // Agregar o actualizar item en continuar viendo (simplificado)
+        function addToContinueWatching(series) {
+            // Buscar si ya existe
+            const existingIndex = continueWatching.findIndex(item => item.title === series.title);
+            if (existingIndex > -1) {
+                // Actualizar timestamp para mantenerlo arriba
+                continueWatching[existingIndex].timestamp = Date.now();
+            } else {
+                // Agregar nuevo con progreso simulado
+                continueWatching.unshift({
+                    title: series.title,
+                    image: series.image,
+                    progress: 30, // Progreso inicial simulado
+                    timestamp: Date.now()
+                });
+                // Limitar a 10 items
+                if (continueWatching.length > 10) {
+                    continueWatching = continueWatching.slice(0, 10);
+                }
+            }
+            saveData();
+            updateContinueCarousel();
+        }
+
+        // Actualizar carrusel continuar viendo - Simplificado
         function updateContinueCarousel() {
             const carousel = document.getElementById('continue-carousel');
             carousel.innerHTML = '';
             
-            // Obtener episodios en progreso ordenados por timestamp
-            const inProgress = Object.values(watchingProgress)
-                .filter(p => p.percent > 0 && p.percent < 95)
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, 10);
+            // Ordenar por timestamp descendente
+            const sortedContinue = [...continueWatching].sort((a, b) => b.timestamp - a.timestamp);
             
-            if (inProgress.length > 0) {
-                inProgress.forEach(progress => {
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item';
-                    item.addEventListener('click', function() {
-                        resumeEpisode(progress);
+            sortedContinue.forEach(item => {
+                const series = seriesData.find(s => s.title === item.title);
+                if (series) {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'carousel-item';
+                    itemEl.addEventListener('click', function() {
+                        openSeriesModal(series);
                     });
                     
                     const img = document.createElement('img');
-                    img.src = progress.episode.logo || createPlaceholderImage(progress.episode.cleanTitle || progress.episode.title);
-                    img.alt = progress.episode.title;
+                    img.src = item.image || series.image;
+                    img.alt = item.title;
+                    img.onerror = function() {
+                        this.src = createPlaceholderImage(item.title);
+                    };
                     
                     const progressWrapper = document.createElement('div');
                     progressWrapper.className = 'progress-bar-wrapper';
                     
                     const progressFill = document.createElement('div');
                     progressFill.className = 'progress-bar-fill';
-                    progressFill.style.width = `${progress.percent}%`;
+                    progressFill.style.width = `${item.progress}%`;
                     
                     progressWrapper.appendChild(progressFill);
-                    item.appendChild(img);
-                    item.appendChild(progressWrapper);
-                    carousel.appendChild(item);
-                });
-            } else if (seriesData.length === 0) {
-                // Mostrar ejemplos si no hay series
-                movieData.forEach(movie => {
-                    const item = document.createElement('div');
-                    item.className = 'carousel-item';
-                    
-                    const img = document.createElement('img');
-                    img.src = movie.image;
-                    img.alt = movie.title;
-                    
-                    item.appendChild(img);
-                    carousel.appendChild(item);
-                });
+                    itemEl.appendChild(img);
+                    itemEl.appendChild(progressWrapper);
+                    carousel.appendChild(itemEl);
+                }
+            });
+        }
+
+        // Agregar a Mi Lista
+        function addToMyList(series) {
+            if (!myList.some(m => m.title === series.title)) {
+                myList.push(series);
+                saveData();
+                updateSeriesCarousel();
+                updateMyListViews();
+                document.getElementById('mylist-button').textContent = '✓ Mi lista';
+                document.getElementById('mylist-button').classList.add('play-button');
+                document.getElementById('mylist-button').classList.remove('info-button');
             }
         }
 
-        // Reanudar episodio
-        function resumeEpisode(progress) {
-            playEpisode(progress.episode, progress.seriesTitle, progress.currentTime);
+        // Quitar de Mi Lista
+        function removeFromMyList(series) {
+            const index = myList.findIndex(m => m.title === series.title);
+            if (index > -1) {
+                myList.splice(index, 1);
+                saveData();
+                updateSeriesCarousel();
+                updateMyListViews();
+                
+                // Actualizar botón en el modal si está abierto
+                if (currentSeries && currentSeries.title === series.title) {
+                    document.getElementById('mylist-button').textContent = '+ Mi lista';
+                    document.getElementById('mylist-button').classList.remove('play-button');
+                    document.getElementById('mylist-button').classList.add('info-button');
+                }
+            }
         }
 
-        // Abrir modal de serie
+        // Mostrar página principal
+        function showHome() {
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('series-section').style.display = 'block';
+            document.getElementById('continue-section').style.display = 'block';
+            document.getElementById('mylist-section').style.display = 'none';
+            updateSeriesCarousel();
+            updateContinueCarousel();
+        }
+
+        // Mostrar Mi Lista
+        function showMyList() {
+            document.getElementById('banner-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('continue-section').style.display = 'none';
+            document.getElementById('mylist-section').style.display = 'block';
+            updateMyListViews();
+        }
+
+        // Abrir modal de serie - Agregar a continuar viendo
         function openSeriesModal(series) {
             currentSeries = series;
+            addToContinueWatching(series); // Agregar al hacer click en la serie
             
             // Actualizar contenido del modal
             document.getElementById('modal-title').textContent = series.title;
@@ -1434,6 +1851,24 @@
                     seasonSection.appendChild(episodesGrid);
                     seasonsContainer.appendChild(seasonSection);
                 }
+            }
+            
+            // Configurar botón Mi Lista
+            const mylistButton = document.getElementById('mylist-button');
+            if (myList.some(m => m.title === series.title)) {
+                mylistButton.textContent = '✓ Mi lista';
+                mylistButton.classList.add('play-button');
+                mylistButton.classList.remove('info-button');
+                mylistButton.onclick = function() {
+                    removeFromMyList(series);
+                };
+            } else {
+                mylistButton.textContent = '+ Mi lista';
+                mylistButton.classList.remove('play-button');
+                mylistButton.classList.add('info-button');
+                mylistButton.onclick = function() {
+                    addToMyList(series);
+                };
             }
             
             // Mostrar modal
