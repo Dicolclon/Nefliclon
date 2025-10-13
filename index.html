@@ -555,10 +555,11 @@
             position: relative;
         }
         
-        .video-player video {
+        .video-player video, .video-player iframe {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            border: none;
         }
         
         .video-title {
@@ -797,8 +798,8 @@
     </style>
 </head>
 <body>
-    <!-- Input oculto para selección de archivos M3U -->
-    <input type="file" id="m3u-files" multiple accept=".m3u,.m3u8" style="display: none;">
+    <!-- Input oculto para selección de archivos M3U y JSON -->
+    <input type="file" id="m3u-files" multiple accept=".m3u,.m3u8,.json" style="display: none;">
 
     <!-- Header -->
     <header class="header">
@@ -807,10 +808,10 @@
                 <span>NefliClon</span>
             </a>
             <ul class="nav-links">
-                <li><a href="#" onclick="selectM3UFiles()">Cargar M3U</a></li>
+                <li><a href="#" onclick="selectM3UFiles()">Subir M3U</a></li>
                 <li><a href="#" onclick="showHome()">Inicio</a></li>
-                <li><a href="#" onclick="showHome()">Series</a></li>
-                <li><a href="#" onclick="showHome()">Películas</a></li>
+                <li><a href="#" onclick="showSeries()">Series</a></li>
+                <li><a href="#" onclick="showMovies()">Películas</a></li>
                 <li><a href="#" onclick="showHome()">Novedades populares</a></li>
                 <li><a href="#" onclick="showMyList()">Mi lista</a></li>
             </ul>
@@ -826,7 +827,7 @@
     <section class="banner" id="banner-section">
         <div class="banner-content">
             <h1 class="banner-title" id="banner-title">Bienvenido a NefliClon</h1>
-            <p class="banner-description" id="banner-description">Carga tus archivos M3U para comenzar a ver tu contenido favorito.</p>
+            <p class="banner-description" id="banner-description">Carga tus archivos M3U o JSON para comenzar a ver tu contenido favorito.</p>
             <div class="banner-buttons">
                 <button class="banner-button play-button" id="banner-play">▶ Reproducir</button>
                 <button class="banner-button info-button" id="banner-info">ⓘ Más información</button>
@@ -834,7 +835,7 @@
         </div>
     </section>
 
-    <!-- Secciones de contenido -->
+    <!-- Sección de Series -->
     <section class="content-section" id="series-section">
         <h2 class="section-title">Tus series</h2>
         
@@ -845,6 +846,20 @@
             </div>
             <div class="carousel-nav prev" onclick="moveCarousel('series-carousel', -1)">‹</div>
             <div class="carousel-nav next" onclick="moveCarousel('series-carousel', 1)">›</div>
+        </div>
+    </section>
+
+    <!-- Sección de Películas -->
+    <section class="content-section" id="movies-section">
+        <h2 class="section-title">Tus películas</h2>
+        
+        <!-- Vista carrusel (cuadrícula) -->
+        <div class="carousel" id="movies-carousel-container">
+            <div class="carousel-container" id="movies-carousel">
+                <!-- Las películas cargadas desde JSON aparecerán aquí en formato cuadrícula -->
+            </div>
+            <div class="carousel-nav prev" onclick="moveCarousel('movies-carousel', -1)">‹</div>
+            <div class="carousel-nav next" onclick="moveCarousel('movies-carousel', 1)">›</div>
         </div>
     </section>
 
@@ -908,11 +923,33 @@
         </div>
     </div>
 
+    <!-- Modal de detalles de película -->
+    <div class="modal" id="movie-modal">
+        <div class="modal-content">
+            <div class="modal-header" id="movie-modal-header">
+                <div class="modal-close" id="movie-modal-close">×</div>
+            </div>
+            <div class="modal-body">
+                <h2 class="modal-title" id="movie-modal-title">Título de la película</h2>
+                <div class="modal-info">
+                    <span class="modal-rating" id="movie-modal-rating">96% de coincidencia</span>
+                    <span class="modal-year" id="movie-modal-year">2024</span>
+                </div>
+                <p class="modal-description" id="movie-modal-description">Descripción de la película.</p>
+                <div class="banner-buttons">
+                    <button class="banner-button play-button" id="movie-modal-play">▶ Reproducir</button>
+                    <button class="banner-button info-button" id="movie-mylist-button">+ Mi lista</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reproductor de video mejorado -->
     <div class="video-player" id="video-player">
         <div class="video-container">
             <div class="video-title" id="video-title">Título del episodio</div>
             <video id="video-element"></video>
+            <iframe id="video-iframe" style="display:none; width:100%; height:100%; border:none;"></iframe>
             <div class="video-controls" id="video-controls">
                 <div class="progress-container" id="progress-container">
                     <div class="progress-buffered" id="progress-buffered"></div>
@@ -920,7 +957,7 @@
                 </div>
                 <div class="controls-top">
                     <div class="video-controls-left">
-                        <button class="control-button" id="play-pause-btn">⏸️</button>
+                        <button class="control-button" id="play-pause-btn"⏸️</button>
                         <button class="control-button" id="backward-btn">⏪</button>
                         <button class="control-button" id="forward-btn">⏩</button>
                         <div class="volume-container">
@@ -972,17 +1009,21 @@
     <script>
         // Variables globales
         let seriesData = [];
+        let moviesData = [];
         let myList = [];
         let currentSeries = null;
+        let currentMovie = null;
         let currentBannerSeries = null;
         let currentVideo = null;
         let continueWatching = []; // Lista simplificada para continuar viendo
         let playbackSpeed = 1;
         let currentView = 'horizontal'; // Vista por defecto en Mi Lista
+        let isIframeMode = false; // Para controlar si estamos usando iframe o video
 
         // Función para guardar datos en localStorage
         function saveData() {
             localStorage.setItem('nefliclon_series', JSON.stringify(seriesData));
+            localStorage.setItem('nefliclon_movies', JSON.stringify(moviesData));
             localStorage.setItem('nefliclon_mylist', JSON.stringify(myList));
             localStorage.setItem('nefliclon_continue', JSON.stringify(continueWatching));
         }
@@ -996,6 +1037,12 @@
                 updateSeriesCarousel();
                 updateMyListViews();
                 updateBanner();
+            }
+            
+            const savedMovies = localStorage.getItem('nefliclon_movies');
+            if (savedMovies) {
+                moviesData = JSON.parse(savedMovies);
+                updateMoviesCarousel();
             }
             
             const savedMyList = localStorage.getItem('nefliclon_mylist');
@@ -1035,13 +1082,19 @@
                 for (let f of Array.from(this.files)) {
                     if (f.name.endsWith('.m3u') || f.name.endsWith('.m3u8')) {
                         processM3UFile(f);
+                    } else if (f.name.endsWith('.json')) {
+                        processJSONFile(f);
                     }
                 }
             });
             
-            // Cerrar modal
+            // Cerrar modales
             document.getElementById('modal-close').addEventListener('click', function() {
                 document.getElementById('series-modal').style.display = 'none';
+            });
+            
+            document.getElementById('movie-modal-close').addEventListener('click', function() {
+                document.getElementById('movie-modal').style.display = 'none';
             });
             
             // Cerrar reproductor de video
@@ -1105,84 +1158,98 @@
             
             // Mostrar/ocultar controles al mover el mouse
             document.getElementById('video-player').addEventListener('mousemove', function() {
-                videoControls.classList.remove('hidden');
-                videoTitle.classList.remove('hidden');
-                clearTimeout(controlsTimeout);
-                controlsTimeout = setTimeout(() => {
-                    if (!video.paused) {
-                        videoControls.classList.add('hidden');
-                        videoTitle.classList.add('hidden');
-                    }
-                }, 3000);
+                if (!isIframeMode) {
+                    videoControls.classList.remove('hidden');
+                    videoTitle.classList.remove('hidden');
+                    clearTimeout(controlsTimeout);
+                    controlsTimeout = setTimeout(() => {
+                        if (!video.paused) {
+                            videoControls.classList.add('hidden');
+                            videoTitle.classList.add('hidden');
+                        }
+                    }, 3000);
+                }
             });
             
-            // Botón play/pause
+            // Botón play/pause (solo para video, no para iframe)
             playPauseBtn.addEventListener('click', function() {
-                if (video.paused) {
-                    video.play();
-                    playPauseBtn.innerHTML = '⏸️';
-                } else {
+                if (!isIframeMode && !video.paused) {
                     video.pause();
                     playPauseBtn.innerHTML = '▶️';
+                } else if (!isIframeMode) {
+                    video.play();
+                    playPauseBtn.innerHTML = '⏸️';
                 }
             });
             
-            // Retroceder 10 segundos
+            // Retroceder 10 segundos (solo para video)
             backwardBtn.addEventListener('click', function() {
-                video.currentTime -= 10;
-            });
-            
-            // Adelantar 10 segundos
-            forwardBtn.addEventListener('click', function() {
-                video.currentTime += 10;
-            });
-            
-            // Control de volumen
-            volumeBtn.addEventListener('click', function() {
-                if (video.muted || video.volume === 0) {
-                    video.muted = false;
-                    video.volume = 1;
-                    volumeFill.style.width = '100%';
-                    volumeBtn.innerHTML = '🔊';
-                } else {
-                    video.muted = true;
-                    volumeFill.style.width = '0%';
-                    volumeBtn.innerHTML = '🔇';
+                if (!isIframeMode) {
+                    video.currentTime -= 10;
                 }
             });
             
-            // Slider de volumen
+            // Adelantar 10 segundos (solo para video)
+            forwardBtn.addEventListener('click', function() {
+                if (!isIframeMode) {
+                    video.currentTime += 10;
+                }
+            });
+            
+            // Control de volumen (solo para video)
+            volumeBtn.addEventListener('click', function() {
+                if (!isIframeMode) {
+                    if (video.muted || video.volume === 0) {
+                        video.muted = false;
+                        video.volume = 1;
+                        volumeFill.style.width = '100%';
+                        volumeBtn.innerHTML = '🔊';
+                    } else {
+                        video.muted = true;
+                        volumeFill.style.width = '0%';
+                        volumeBtn.innerHTML = '🔇';
+                    }
+                }
+            });
+            
+            // Slider de volumen (solo para video)
             volumeSlider.addEventListener('click', function(e) {
-                const rect = volumeSlider.getBoundingClientRect();
-                const percent = (e.clientX - rect.left) / rect.width;
-                video.volume = Math.max(0, Math.min(1, percent));
-                volumeFill.style.width = `${percent * 100}%`;
-                video.muted = false;
-                volumeBtn.innerHTML = video.volume === 0 ? '🔇' : '🔊';
+                if (!isIframeMode) {
+                    const rect = volumeSlider.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    video.volume = Math.max(0, Math.min(1, percent));
+                    volumeFill.style.width = `${percent * 100}%`;
+                    video.muted = false;
+                    volumeBtn.innerHTML = video.volume === 0 ? '🔇' : '🔊';
+                }
             });
             
-            // Control de velocidad
+            // Control de velocidad (solo para video)
             speedBtn.addEventListener('click', function() {
-                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-                const currentIndex = speeds.indexOf(playbackSpeed);
-                const nextIndex = (currentIndex + 1) % speeds.length;
-                playbackSpeed = speeds[nextIndex];
-                video.playbackRate = playbackSpeed;
-                speedBtn.textContent = playbackSpeed + 'x';
+                if (!isIframeMode) {
+                    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                    const currentIndex = speeds.indexOf(playbackSpeed);
+                    const nextIndex = (currentIndex + 1) % speeds.length;
+                    playbackSpeed = speeds[nextIndex];
+                    video.playbackRate = playbackSpeed;
+                    speedBtn.textContent = playbackSpeed + 'x';
+                }
             });
             
-            // Actualizar progreso
+            // Actualizar progreso (solo para video)
             video.addEventListener('timeupdate', function() {
-                const percent = (video.currentTime / video.duration) * 100;
-                progressFill.style.width = `${percent}%`;
-                
-                currentTimeElement.textContent = formatTime(video.currentTime);
-                durationElement.textContent = formatTime(video.duration);
+                if (!isIframeMode) {
+                    const percent = (video.currentTime / video.duration) * 100;
+                    progressFill.style.width = `${percent}%`;
+                    
+                    currentTimeElement.textContent = formatTime(video.currentTime);
+                    durationElement.textContent = formatTime(video.duration);
+                }
             });
             
-            // Actualizar buffer
+            // Actualizar buffer (solo para video)
             video.addEventListener('progress', function() {
-                if (video.buffered.length > 0) {
+                if (!isIframeMode && video.buffered.length > 0) {
                     const bufferedEnd = video.buffered.end(video.buffered.length - 1);
                     const duration = video.duration;
                     if (duration > 0) {
@@ -1191,11 +1258,13 @@
                 }
             });
             
-            // Click en la barra de progreso
+            // Click en la barra de progreso (solo para video)
             progressContainer.addEventListener('click', function(e) {
-                const rect = progressContainer.getBoundingClientRect();
-                const percent = (e.clientX - rect.left) / rect.width;
-                video.currentTime = percent * video.duration;
+                if (!isIframeMode) {
+                    const rect = progressContainer.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    video.currentTime = percent * video.duration;
+                }
             });
             
             // Botón de pantalla completa
@@ -1209,18 +1278,22 @@
                 }
             });
             
-            // Eventos de video
+            // Eventos de video (solo para video)
             video.addEventListener('play', function() {
-                playPauseBtn.innerHTML = '⏸️';
+                if (!isIframeMode) {
+                    playPauseBtn.innerHTML = '⏸️';
+                }
             });
             
             video.addEventListener('pause', function() {
-                playPauseBtn.innerHTML = '▶️';
+                if (!isIframeMode) {
+                    playPauseBtn.innerHTML = '▶️';
+                }
             });
             
             // Eventos de teclado
             document.addEventListener('keydown', function(e) {
-                if (document.getElementById('video-player').style.display === 'block') {
+                if (document.getElementById('video-player').style.display === 'block' && !isIframeMode) {
                     switch(e.key) {
                         case ' ':
                         case 'k':
@@ -1286,7 +1359,14 @@
                 const content = e.target.result;
                 const series = parseM3UContent(content, file.name);
                 if (series && series.seasons) {
-                    seriesData.push(series);
+                    // Verificar si ya existe para evitar duplicados
+                    const existingIndex = seriesData.findIndex(s => s.title === series.title);
+                    if (existingIndex > -1) {
+                        // Actualizar en lugar de agregar
+                        seriesData[existingIndex] = series;
+                    } else {
+                        seriesData.push(series);
+                    }
                     updateSeriesCarousel();
                     updateMyListViews();
                     updateBanner();
@@ -1298,7 +1378,55 @@
             reader.readAsText(file);
         }
 
-        // Parsear contenido M3U - REVERTIDO
+        // Procesar archivo JSON
+        function processJSONFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const content = JSON.parse(e.target.result);
+                    const movies = parseJSONContent(content, file.name);
+                    if (movies && movies.length > 0) {
+                        // Verificar y actualizar películas existentes
+                        movies.forEach(movie => {
+                            const existingIndex = moviesData.findIndex(m => m.title === movie.title);
+                            if (existingIndex > -1) {
+                                // Actualizar en lugar de agregar
+                                moviesData[existingIndex] = movie;
+                            } else {
+                                moviesData.push(movie);
+                            }
+                        });
+                        updateMoviesCarousel();
+                        saveData();
+                    }
+                } catch (error) {
+                    console.error('Error al procesar JSON:', error);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Parsear contenido JSON
+        function parseJSONContent(content, fileName) {
+            if (!Array.isArray(content)) {
+                console.error('El contenido JSON debe ser un array');
+                return [];
+            }
+            
+            return content.map(item => {
+                return {
+                    title: item.title || 'Película sin título',
+                    image: item.image || createPlaceholderImage(item.title || 'Película'),
+                    video: item.video,
+                    description: `Película: ${item.title || 'Sin título'}`,
+                    type: 'movie'
+                };
+            });
+        }
+
+        // Parsear contenido M3U
         function parseM3UContent(content, fileName) {
             const lines = content.split('\n');
             let episodes = [];
@@ -1356,11 +1484,12 @@
                 description: `Serie con ${episodes.length} episodios`,
                 image: firstLogo || createPlaceholderImage(seriesTitle),
                 seasons: seasons,
-                totalEpisodes: episodes.length
+                totalEpisodes: episodes.length,
+                type: 'series'
             };
         }
 
-        // Organizar episodios en temporadas de manera inteligente - REVERTIDO
+        // Organizar episodios en temporadas de manera inteligente
         function organizeSeasonsFromEpisodes(episodes) {
             const seasons = {};
             let currentSeason = 1;
@@ -1488,10 +1617,12 @@
 
         // Actualizar banner con serie random
         function updateBanner() {
-            if (seriesData.length === 0) return;
+            if (seriesData.length === 0 && moviesData.length === 0) return;
             
-            const randomIndex = Math.floor(Math.random() * seriesData.length);
-            currentBannerSeries = seriesData[randomIndex];
+            // Combinar series y películas para el banner
+            const allContent = [...seriesData, ...moviesData];
+            const randomIndex = Math.floor(Math.random() * allContent.length);
+            currentBannerSeries = allContent[randomIndex];
             
             const banner = document.querySelector('.banner');
             const bannerTitle = document.getElementById('banner-title');
@@ -1509,11 +1640,19 @@
             
             // Configurar botones del banner
             document.getElementById('banner-play').onclick = function() {
-                playFirstEpisode(currentBannerSeries);
+                if (currentBannerSeries.type === 'series') {
+                    playFirstEpisode(currentBannerSeries);
+                } else {
+                    playMovie(currentBannerSeries);
+                }
             };
             
             document.getElementById('banner-info').onclick = function() {
-                openSeriesModal(currentBannerSeries);
+                if (currentBannerSeries.type === 'series') {
+                    openSeriesModal(currentBannerSeries);
+                } else {
+                    openMovieModal(currentBannerSeries);
+                }
             };
         }
 
@@ -1525,6 +1664,33 @@
             }
         }
 
+        // Reproducir película
+        function playMovie(movie) {
+            const videoPlayer = document.getElementById('video-player');
+            const videoElement = document.getElementById('video-element');
+            const videoIframe = document.getElementById('video-iframe');
+            const videoTitle = document.getElementById('video-title');
+            const videoControls = document.getElementById('video-controls');
+            
+            currentVideo = {
+                movie: movie
+            };
+            
+            // Usar iframe para películas JSON
+            isIframeMode = true;
+            videoElement.style.display = 'none';
+            videoIframe.style.display = 'block';
+            videoIframe.src = movie.video;
+            videoTitle.textContent = movie.title;
+            videoPlayer.style.display = 'block';
+            
+            // Ocultar controles para iframe
+            videoControls.style.display = 'none';
+            
+            // Cerrar modal si está abierto
+            document.getElementById('movie-modal').style.display = 'none';
+        }
+
         // Actualizar carrusel de series
         function updateSeriesCarousel() {
             const carousel = document.getElementById('series-carousel');
@@ -1532,7 +1698,7 @@
             
             seriesData.forEach(series => {
                 const item = document.createElement('div');
-                item.className = `carousel-item ${myList.some(m => m.title === series.title) ? 'in-mylist' : ''}`;
+                item.className = `carousel-item ${myList.some(m => m.title === series.title && m.type === 'series') ? 'in-mylist' : ''}`;
                 item.addEventListener('click', function() {
                     openSeriesModal(series);
                 });
@@ -1542,6 +1708,30 @@
                 img.alt = series.title;
                 img.onerror = function() {
                     this.src = createPlaceholderImage(series.title);
+                };
+                
+                item.appendChild(img);
+                carousel.appendChild(item);
+            });
+        }
+
+        // Actualizar carrusel de películas
+        function updateMoviesCarousel() {
+            const carousel = document.getElementById('movies-carousel');
+            carousel.innerHTML = '';
+            
+            moviesData.forEach(movie => {
+                const item = document.createElement('div');
+                item.className = `carousel-item ${myList.some(m => m.title === movie.title && m.type === 'movie') ? 'in-mylist' : ''}`;
+                item.addEventListener('click', function() {
+                    openMovieModal(movie);
+                });
+                
+                const img = document.createElement('img');
+                img.src = movie.image;
+                img.alt = movie.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(movie.title);
                 };
                 
                 item.appendChild(img);
@@ -1560,22 +1750,26 @@
             const carousel = document.getElementById('mylist-carousel');
             carousel.innerHTML = '';
             
-            myList.forEach(series => {
-                const item = document.createElement('div');
-                item.className = 'carousel-item in-mylist';
-                item.addEventListener('click', function() {
-                    openSeriesModal(series);
+            myList.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'carousel-item in-mylist';
+                itemEl.addEventListener('click', function() {
+                    if (item.type === 'series') {
+                        openSeriesModal(item);
+                    } else {
+                        openMovieModal(item);
+                    }
                 });
                 
                 const img = document.createElement('img');
-                img.src = series.image;
-                img.alt = series.title;
+                img.src = item.image;
+                img.alt = item.title;
                 img.onerror = function() {
-                    this.src = createPlaceholderImage(series.title);
+                    this.src = createPlaceholderImage(item.title);
                 };
                 
-                item.appendChild(img);
-                carousel.appendChild(item);
+                itemEl.appendChild(img);
+                carousel.appendChild(itemEl);
             });
         }
 
@@ -1584,23 +1778,27 @@
             const horizontalList = document.getElementById('mylist-horizontal');
             horizontalList.innerHTML = '';
             
-            myList.forEach(series => {
-                const item = document.createElement('div');
-                item.className = 'horizontal-item in-mylist';
-                item.addEventListener('click', function() {
-                    openSeriesModal(series);
+            myList.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'horizontal-item in-mylist';
+                itemEl.addEventListener('click', function() {
+                    if (item.type === 'series') {
+                        openSeriesModal(item);
+                    } else {
+                        openMovieModal(item);
+                    }
                 });
                 
                 const imageDiv = document.createElement('div');
                 imageDiv.className = 'horizontal-item-image';
-                imageDiv.style.backgroundImage = `url(${series.image})`;
+                imageDiv.style.backgroundImage = `url(${item.image})`;
                 
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'horizontal-item-content';
                 
                 const title = document.createElement('h3');
                 title.className = 'horizontal-item-title';
-                title.textContent = series.title;
+                title.textContent = item.title;
                 
                 const info = document.createElement('div');
                 info.className = 'horizontal-item-info';
@@ -1612,16 +1810,16 @@
                 const year = document.createElement('span');
                 year.textContent = '2024';
                 
-                const seasons = document.createElement('span');
-                seasons.textContent = `${Object.keys(series.seasons).length} Temporadas`;
+                const typeInfo = document.createElement('span');
+                typeInfo.textContent = item.type === 'series' ? `${Object.keys(item.seasons).length} Temporadas` : 'Película';
                 
                 info.appendChild(rating);
                 info.appendChild(year);
-                info.appendChild(seasons);
+                info.appendChild(typeInfo);
                 
                 const description = document.createElement('p');
                 description.className = 'horizontal-item-description';
-                description.textContent = series.description;
+                description.textContent = item.description;
                 
                 const buttons = document.createElement('div');
                 buttons.className = 'horizontal-item-buttons';
@@ -1631,7 +1829,11 @@
                 playButton.textContent = '▶ Reproducir';
                 playButton.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    playFirstEpisode(series);
+                    if (item.type === 'series') {
+                        playFirstEpisode(item);
+                    } else {
+                        playMovie(item);
+                    }
                 });
                 
                 const removeButton = document.createElement('button');
@@ -1639,7 +1841,7 @@
                 removeButton.textContent = '✕ Quitar de Mi Lista';
                 removeButton.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    removeFromMyList(series);
+                    removeFromMyList(item);
                 });
                 
                 buttons.appendChild(playButton);
@@ -1650,25 +1852,26 @@
                 contentDiv.appendChild(description);
                 contentDiv.appendChild(buttons);
                 
-                item.appendChild(imageDiv);
-                item.appendChild(contentDiv);
+                itemEl.appendChild(imageDiv);
+                itemEl.appendChild(contentDiv);
                 
-                horizontalList.appendChild(item);
+                horizontalList.appendChild(itemEl);
             });
         }
 
         // Agregar o actualizar item en continuar viendo (simplificado)
-        function addToContinueWatching(series) {
+        function addToContinueWatching(item) {
             // Buscar si ya existe
-            const existingIndex = continueWatching.findIndex(item => item.title === series.title);
+            const existingIndex = continueWatching.findIndex(i => i.title === item.title);
             if (existingIndex > -1) {
                 // Actualizar timestamp para mantenerlo arriba
                 continueWatching[existingIndex].timestamp = Date.now();
             } else {
                 // Agregar nuevo con progreso simulado
                 continueWatching.unshift({
-                    title: series.title,
-                    image: series.image,
+                    title: item.title,
+                    image: item.image,
+                    type: item.type,
                     progress: 30, // Progreso inicial simulado
                     timestamp: Date.now()
                 });
@@ -1690,16 +1893,26 @@
             const sortedContinue = [...continueWatching].sort((a, b) => b.timestamp - a.timestamp);
             
             sortedContinue.forEach(item => {
-                const series = seriesData.find(s => s.title === item.title);
-                if (series) {
+                let contentItem;
+                if (item.type === 'series') {
+                    contentItem = seriesData.find(s => s.title === item.title);
+                } else {
+                    contentItem = moviesData.find(m => m.title === item.title);
+                }
+                
+                if (contentItem) {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'carousel-item';
                     itemEl.addEventListener('click', function() {
-                        openSeriesModal(series);
+                        if (item.type === 'series') {
+                            openSeriesModal(contentItem);
+                        } else {
+                            openMovieModal(contentItem);
+                        }
                     });
                     
                     const img = document.createElement('img');
-                    img.src = item.image || series.image;
+                    img.src = item.image || contentItem.image;
                     img.alt = item.title;
                     img.onerror = function() {
                         this.src = createPlaceholderImage(item.title);
@@ -1721,32 +1934,46 @@
         }
 
         // Agregar a Mi Lista
-        function addToMyList(series) {
-            if (!myList.some(m => m.title === series.title)) {
-                myList.push(series);
+        function addToMyList(item) {
+            if (!myList.some(m => m.title === item.title && m.type === item.type)) {
+                myList.push(item);
                 saveData();
                 updateSeriesCarousel();
+                updateMoviesCarousel();
                 updateMyListViews();
-                document.getElementById('mylist-button').textContent = '✓ Mi lista';
-                document.getElementById('mylist-button').classList.add('play-button');
-                document.getElementById('mylist-button').classList.remove('info-button');
+                
+                // Actualizar botón en el modal
+                if (item.type === 'series') {
+                    document.getElementById('mylist-button').textContent = '✓ Mi lista';
+                    document.getElementById('mylist-button').classList.add('play-button');
+                    document.getElementById('mylist-button').classList.remove('info-button');
+                } else {
+                    document.getElementById('movie-mylist-button').textContent = '✓ Mi lista';
+                    document.getElementById('movie-mylist-button').classList.add('play-button');
+                    document.getElementById('movie-mylist-button').classList.remove('info-button');
+                }
             }
         }
 
         // Quitar de Mi Lista
-        function removeFromMyList(series) {
-            const index = myList.findIndex(m => m.title === series.title);
+        function removeFromMyList(item) {
+            const index = myList.findIndex(m => m.title === item.title && m.type === item.type);
             if (index > -1) {
                 myList.splice(index, 1);
                 saveData();
                 updateSeriesCarousel();
+                updateMoviesCarousel();
                 updateMyListViews();
                 
                 // Actualizar botón en el modal si está abierto
-                if (currentSeries && currentSeries.title === series.title) {
+                if (item.type === 'series' && currentSeries && currentSeries.title === item.title) {
                     document.getElementById('mylist-button').textContent = '+ Mi lista';
                     document.getElementById('mylist-button').classList.remove('play-button');
                     document.getElementById('mylist-button').classList.add('info-button');
+                } else if (item.type === 'movie' && currentMovie && currentMovie.title === item.title) {
+                    document.getElementById('movie-mylist-button').textContent = '+ Mi lista';
+                    document.getElementById('movie-mylist-button').classList.remove('play-button');
+                    document.getElementById('movie-mylist-button').classList.add('info-button');
                 }
             }
         }
@@ -1755,9 +1982,33 @@
         function showHome() {
             document.getElementById('banner-section').style.display = 'flex';
             document.getElementById('series-section').style.display = 'block';
+            document.getElementById('movies-section').style.display = 'block';
             document.getElementById('continue-section').style.display = 'block';
             document.getElementById('mylist-section').style.display = 'none';
             updateSeriesCarousel();
+            updateMoviesCarousel();
+            updateContinueCarousel();
+        }
+
+        // Mostrar solo series
+        function showSeries() {
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('series-section').style.display = 'block';
+            document.getElementById('movies-section').style.display = 'none';
+            document.getElementById('continue-section').style.display = 'block';
+            document.getElementById('mylist-section').style.display = 'none';
+            updateSeriesCarousel();
+            updateContinueCarousel();
+        }
+
+        // Mostrar solo películas
+        function showMovies() {
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('movies-section').style.display = 'block';
+            document.getElementById('continue-section').style.display = 'block';
+            document.getElementById('mylist-section').style.display = 'none';
+            updateMoviesCarousel();
             updateContinueCarousel();
         }
 
@@ -1765,6 +2016,7 @@
         function showMyList() {
             document.getElementById('banner-section').style.display = 'none';
             document.getElementById('series-section').style.display = 'none';
+            document.getElementById('movies-section').style.display = 'none';
             document.getElementById('continue-section').style.display = 'none';
             document.getElementById('mylist-section').style.display = 'block';
             updateMyListViews();
@@ -1855,7 +2107,7 @@
             
             // Configurar botón Mi Lista
             const mylistButton = document.getElementById('mylist-button');
-            if (myList.some(m => m.title === series.title)) {
+            if (myList.some(m => m.title === series.title && m.type === 'series')) {
                 mylistButton.textContent = '✓ Mi lista';
                 mylistButton.classList.add('play-button');
                 mylistButton.classList.remove('info-button');
@@ -1880,20 +2132,70 @@
             };
         }
 
+        // Abrir modal de película
+        function openMovieModal(movie) {
+            currentMovie = movie;
+            addToContinueWatching(movie);
+            
+            // Actualizar contenido del modal
+            document.getElementById('movie-modal-title').textContent = movie.title;
+            document.getElementById('movie-modal-description').textContent = movie.description;
+            
+            const modalHeader = document.getElementById('movie-modal-header');
+            if (movie.image && !movie.image.includes('svg')) {
+                modalHeader.style.backgroundImage = `url(${movie.image})`;
+            } else {
+                modalHeader.style.background = '#333';
+            }
+            
+            // Configurar botón Mi Lista
+            const mylistButton = document.getElementById('movie-mylist-button');
+            if (myList.some(m => m.title === movie.title && m.type === 'movie')) {
+                mylistButton.textContent = '✓ Mi lista';
+                mylistButton.classList.add('play-button');
+                mylistButton.classList.remove('info-button');
+                mylistButton.onclick = function() {
+                    removeFromMyList(movie);
+                };
+            } else {
+                mylistButton.textContent = '+ Mi lista';
+                mylistButton.classList.remove('play-button');
+                mylistButton.classList.add('info-button');
+                mylistButton.onclick = function() {
+                    addToMyList(movie);
+                };
+            }
+            
+            // Mostrar modal
+            document.getElementById('movie-modal').style.display = 'block';
+            
+            // Configurar botón de reproducción
+            document.getElementById('movie-modal-play').onclick = function() {
+                playMovie(movie);
+            };
+        }
+
         // Reproducir episodio
         function playEpisode(episode, seriesTitle, startTime = 0) {
             const videoPlayer = document.getElementById('video-player');
             const videoElement = document.getElementById('video-element');
+            const videoIframe = document.getElementById('video-iframe');
             const videoTitle = document.getElementById('video-title');
+            const videoControls = document.getElementById('video-controls');
             
             currentVideo = {
                 episode: episode,
                 seriesTitle: seriesTitle
             };
             
+            // Usar video para M3U
+            isIframeMode = false;
+            videoElement.style.display = 'block';
+            videoIframe.style.display = 'none';
             videoElement.src = episode.url;
             videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
             videoPlayer.style.display = 'block';
+            videoControls.style.display = 'block';
             
             // Cerrar modal si está abierto
             document.getElementById('series-modal').style.display = 'none';
@@ -1912,15 +2214,25 @@
         function closeVideoPlayer() {
             const videoPlayer = document.getElementById('video-player');
             const videoElement = document.getElementById('video-element');
+            const videoIframe = document.getElementById('video-iframe');
+            const videoControls = document.getElementById('video-controls');
             
             videoPlayer.style.display = 'none';
-            videoElement.pause();
-            videoElement.src = '';
             
-            // Reiniciar velocidad
-            playbackSpeed = 1;
-            videoElement.playbackRate = 1;
-            document.getElementById('speed-btn').textContent = '1x';
+            if (isIframeMode) {
+                videoIframe.src = '';
+            } else {
+                videoElement.pause();
+                videoElement.src = '';
+                
+                // Reiniciar velocidad
+                playbackSpeed = 1;
+                videoElement.playbackRate = 1;
+                document.getElementById('speed-btn').textContent = '1x';
+            }
+            
+            // Restaurar controles
+            videoControls.style.display = 'block';
             
             // Salir de pantalla completa si está activa
             if (document.fullscreenElement) {
