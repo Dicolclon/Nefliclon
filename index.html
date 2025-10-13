@@ -1638,7 +1638,7 @@
             banner.style.backgroundSize = 'cover';
             banner.style.backgroundPosition = 'center';
             
-            // Configurar botones del banner
+            // Configurar botones del banner - CORREGIDO
             document.getElementById('banner-play').onclick = function() {
                 if (currentBannerSeries.type === 'series') {
                     playFirstEpisode(currentBannerSeries);
@@ -1862,7 +1862,7 @@
         // Agregar o actualizar item en continuar viendo (simplificado)
         function addToContinueWatching(item) {
             // Buscar si ya existe
-            const existingIndex = continueWatching.findIndex(i => i.title === item.title);
+            const existingIndex = continueWatching.findIndex(i => i.title === item.title && i.type === item.type);
             if (existingIndex > -1) {
                 // Actualizar timestamp para mantenerlo arriba
                 continueWatching[existingIndex].timestamp = Date.now();
@@ -1884,7 +1884,7 @@
             updateContinueCarousel();
         }
 
-        // Actualizar carrusel continuar viendo - Simplificado
+        // Actualizar carrusel continuar viendo - CORREGIDO
         function updateContinueCarousel() {
             const carousel = document.getElementById('continue-carousel');
             carousel.innerHTML = '';
@@ -2126,7 +2126,7 @@
             // Mostrar modal
             document.getElementById('series-modal').style.display = 'block';
             
-            // Configurar botón de reproducción
+            // Configurar botón de reproducción - CORREGIDO
             document.getElementById('modal-play').onclick = function() {
                 playFirstEpisode(series);
             };
