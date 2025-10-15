@@ -90,6 +90,38 @@
             margin-left: 20px;
             cursor: pointer;
         }
+
+        /* Menú desplegable del perfil */
+        .profile-menu {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 50px;
+            background-color: #141414;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px 0;
+            min-width: 150px;
+            z-index: 1001;
+        }
+
+        .profile-menu.show {
+            display: block;
+        }
+
+        .profile-menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .profile-menu-item:hover {
+            background-color: #333;
+        }
+
+        .profile-menu-item.delete {
+            color: #e50914;
+        }
         
         /* Banner principal */
         .banner {
@@ -490,11 +522,13 @@
         .episode-image {
             width: 100%;
             height: 120px;
-            background-color: #444;
+            background-size: cover;
+            background-position: center;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #aaa;
+            position: relative;
         }
         
         .episode-info {
@@ -692,6 +726,25 @@
             font-size: 1.5rem;
             cursor: pointer;
             z-index: 10;
+            transition: opacity 0.3s;
+        }
+        
+        .video-close.hidden {
+            opacity: 0;
+        }
+        
+        /* Controles simplificados para iframe */
+        .iframe-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            transition: opacity 0.3s;
+        }
+        
+        .iframe-controls.hidden {
+            opacity: 0;
         }
         
         /* Footer */
@@ -794,6 +847,10 @@
             .volume-slider {
                 width: 60px;
             }
+
+            .profile-menu {
+                right: 20px;
+            }
         }
     </style>
 </head>
@@ -819,7 +876,12 @@
         <div class="nav-right">
             <div class="search-icon">🔍</div>
             <div class="notifications">🔔</div>
-            <div class="profile">👤</div>
+            <div class="profile" id="profile-button">👤</div>
+        </div>
+
+        <!-- Menú desplegable del perfil -->
+        <div class="profile-menu" id="profile-menu">
+            <div class="profile-menu-item" onclick="clearAllContent()">🗑️ Limpiar todo el contenido</div>
         </div>
     </header>
 
@@ -950,6 +1012,8 @@
             <div class="video-title" id="video-title">Título del episodio</div>
             <video id="video-element"></video>
             <iframe id="video-iframe" style="display:none; width:100%; height:100%; border:none;"></iframe>
+            
+            <!-- Controles para video normal -->
             <div class="video-controls" id="video-controls">
                 <div class="progress-container" id="progress-container">
                     <div class="progress-buffered" id="progress-buffered"></div>
@@ -957,7 +1021,7 @@
                 </div>
                 <div class="controls-top">
                     <div class="video-controls-left">
-                        <button class="control-button" id="play-pause-btn"⏸️</button>
+                        <button class="control-button" id="play-pause-btn">⏸️</button>
                         <button class="control-button" id="backward-btn">⏪</button>
                         <button class="control-button" id="forward-btn">⏩</button>
                         <div class="volume-container">
@@ -976,6 +1040,12 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Controles simplificados para iframe -->
+            <div class="iframe-controls" id="iframe-controls">
+                <button class="control-button" id="iframe-fullscreen-btn">⛶</button>
+            </div>
+            
             <div class="video-close" id="video-close">×</div>
         </div>
     </div>
@@ -1019,6 +1089,7 @@
         let playbackSpeed = 1;
         let currentView = 'horizontal'; // Vista por defecto en Mi Lista
         let isIframeMode = false; // Para controlar si estamos usando iframe o video
+        let controlsTimeout; // Variable global para el timeout de controles
 
         // Función para guardar datos en localStorage
         function saveData() {
@@ -1072,6 +1143,16 @@
                     header.classList.remove('scrolled');
                 }
             });
+
+            // Cerrar menú del perfil al hacer clic fuera
+            document.addEventListener('click', function(event) {
+                const profileMenu = document.getElementById('profile-menu');
+                const profileButton = document.getElementById('profile-button');
+                
+                if (!profileButton.contains(event.target) && !profileMenu.contains(event.target)) {
+                    profileMenu.classList.remove('show');
+                }
+            });
         });
 
         // Configurar event listeners
@@ -1106,6 +1187,42 @@
             document.getElementById('view-toggle').addEventListener('click', function() {
                 toggleMyListView();
             });
+
+            // Menú del perfil
+            document.getElementById('profile-button').addEventListener('click', function(event) {
+                event.stopPropagation();
+                const profileMenu = document.getElementById('profile-menu');
+                profileMenu.classList.toggle('show');
+            });
+        }
+
+        // Función para limpiar todo el contenido
+        function clearAllContent() {
+            if (confirm('¿Estás seguro de que quieres eliminar todo el contenido? Esta acción no se puede deshacer.')) {
+                // Limpiar arrays de datos
+                seriesData = [];
+                moviesData = [];
+                myList = [];
+                continueWatching = [];
+                
+                // Limpiar localStorage
+                localStorage.removeItem('nefliclon_series');
+                localStorage.removeItem('nefliclon_movies');
+                localStorage.removeItem('nefliclon_mylist');
+                localStorage.removeItem('nefliclon_continue');
+                
+                // Actualizar interfaces
+                updateSeriesCarousel();
+                updateMoviesCarousel();
+                updateMyListViews();
+                updateContinueCarousel();
+                updateBanner();
+                
+                // Cerrar menú del perfil
+                document.getElementById('profile-menu').classList.remove('show');
+                
+                alert('Todo el contenido ha sido eliminado correctamente.');
+            }
         }
 
         // Cambiar entre vistas en Mi Lista
@@ -1151,25 +1268,47 @@
             const volumeFill = document.getElementById('volume-fill');
             const speedBtn = document.getElementById('speed-btn');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const iframeFullscreenBtn = document.getElementById('iframe-fullscreen-btn');
             const videoControls = document.getElementById('video-controls');
+            const iframeControls = document.getElementById('iframe-controls');
             const videoTitle = document.getElementById('video-title');
-            
-            let controlsTimeout;
+            const videoClose = document.getElementById('video-close');
             
             // Mostrar/ocultar controles al mover el mouse
             document.getElementById('video-player').addEventListener('mousemove', function() {
-                if (!isIframeMode) {
+                showVideoControls();
+            });
+            
+            // Función para mostrar controles y programar su ocultación
+            function showVideoControls() {
+                if (isIframeMode) {
+                    // Para iframe: solo mostrar título, botón cerrar y controles simplificados
+                    videoTitle.classList.remove('hidden');
+                    videoClose.classList.remove('hidden');
+                    iframeControls.classList.remove('hidden');
+                    
+                    clearTimeout(controlsTimeout);
+                    controlsTimeout = setTimeout(() => {
+                        videoTitle.classList.add('hidden');
+                        videoClose.classList.add('hidden');
+                        iframeControls.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    // Para video normal: mostrar todos los controles
                     videoControls.classList.remove('hidden');
                     videoTitle.classList.remove('hidden');
+                    videoClose.classList.remove('hidden');
+                    
                     clearTimeout(controlsTimeout);
                     controlsTimeout = setTimeout(() => {
                         if (!video.paused) {
                             videoControls.classList.add('hidden');
                             videoTitle.classList.add('hidden');
+                            videoClose.classList.add('hidden');
                         }
                     }, 3000);
                 }
-            });
+            }
             
             // Botón play/pause (solo para video, no para iframe)
             playPauseBtn.addEventListener('click', function() {
@@ -1180,6 +1319,7 @@
                     video.play();
                     playPauseBtn.innerHTML = '⏸️';
                 }
+                showVideoControls();
             });
             
             // Retroceder 10 segundos (solo para video)
@@ -1187,6 +1327,7 @@
                 if (!isIframeMode) {
                     video.currentTime -= 10;
                 }
+                showVideoControls();
             });
             
             // Adelantar 10 segundos (solo para video)
@@ -1194,6 +1335,7 @@
                 if (!isIframeMode) {
                     video.currentTime += 10;
                 }
+                showVideoControls();
             });
             
             // Control de volumen (solo para video)
@@ -1210,6 +1352,7 @@
                         volumeBtn.innerHTML = '🔇';
                     }
                 }
+                showVideoControls();
             });
             
             // Slider de volumen (solo para video)
@@ -1222,6 +1365,7 @@
                     video.muted = false;
                     volumeBtn.innerHTML = video.volume === 0 ? '🔇' : '🔊';
                 }
+                showVideoControls();
             });
             
             // Control de velocidad (solo para video)
@@ -1234,6 +1378,31 @@
                     video.playbackRate = playbackSpeed;
                     speedBtn.textContent = playbackSpeed + 'x';
                 }
+                showVideoControls();
+            });
+            
+            // Botón de pantalla completa para video normal
+            fullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    document.getElementById('video-player').requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+                showVideoControls();
+            });
+            
+            // Botón de pantalla completa para iframe
+            iframeFullscreenBtn.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    document.getElementById('video-player').requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+                showVideoControls();
             });
             
             // Actualizar progreso (solo para video)
@@ -1265,17 +1434,7 @@
                     const percent = (e.clientX - rect.left) / rect.width;
                     video.currentTime = percent * video.duration;
                 }
-            });
-            
-            // Botón de pantalla completa
-            fullscreenBtn.addEventListener('click', function() {
-                if (!document.fullscreenElement) {
-                    document.getElementById('video-player').requestFullscreen().catch(err => {
-                        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
-                    });
-                } else {
-                    document.exitFullscreen();
-                }
+                showVideoControls();
             });
             
             // Eventos de video (solo para video)
@@ -1293,40 +1452,57 @@
             
             // Eventos de teclado
             document.addEventListener('keydown', function(e) {
-                if (document.getElementById('video-player').style.display === 'block' && !isIframeMode) {
+                if (document.getElementById('video-player').style.display === 'block') {
                     switch(e.key) {
                         case ' ':
                         case 'k':
-                            e.preventDefault();
-                            playPauseBtn.click();
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                playPauseBtn.click();
+                            }
                             break;
                         case 'f':
                             e.preventDefault();
-                            fullscreenBtn.click();
+                            if (isIframeMode) {
+                                iframeFullscreenBtn.click();
+                            } else {
+                                fullscreenBtn.click();
+                            }
                             break;
                         case 'm':
-                            e.preventDefault();
-                            volumeBtn.click();
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                volumeBtn.click();
+                            }
                             break;
                         case 'ArrowLeft':
-                            e.preventDefault();
-                            backwardBtn.click();
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                backwardBtn.click();
+                            }
                             break;
                         case 'ArrowRight':
-                            e.preventDefault();
-                            forwardBtn.click();
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                forwardBtn.click();
+                            }
                             break;
                         case 'ArrowUp':
-                            e.preventDefault();
-                            video.volume = Math.min(1, video.volume + 0.1);
-                            volumeFill.style.width = `${video.volume * 100}%`;
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                video.volume = Math.min(1, video.volume + 0.1);
+                                volumeFill.style.width = `${video.volume * 100}%`;
+                            }
                             break;
                         case 'ArrowDown':
-                            e.preventDefault();
-                            video.volume = Math.max(0, video.volume - 0.1);
-                            volumeFill.style.width = `${video.volume * 100}%`;
+                            if (!isIframeMode) {
+                                e.preventDefault();
+                                video.volume = Math.max(0, video.volume - 0.1);
+                                volumeFill.style.width = `${video.volume * 100}%`;
+                            }
                             break;
                     }
+                    showVideoControls();
                 }
             });
         }
@@ -1385,19 +1561,32 @@
             reader.onload = function(e) {
                 try {
                     const content = JSON.parse(e.target.result);
-                    const movies = parseJSONContent(content, file.name);
-                    if (movies && movies.length > 0) {
-                        // Verificar y actualizar películas existentes
-                        movies.forEach(movie => {
-                            const existingIndex = moviesData.findIndex(m => m.title === movie.title);
-                            if (existingIndex > -1) {
-                                // Actualizar en lugar de agregar
-                                moviesData[existingIndex] = movie;
+                    const items = parseJSONContent(content, file.name);
+                    if (items && items.length > 0) {
+                        items.forEach(item => {
+                            if (item.type === 'series') {
+                                // Verificar y actualizar series existentes
+                                const existingIndex = seriesData.findIndex(s => s.title === item.title);
+                                if (existingIndex > -1) {
+                                    seriesData[existingIndex] = item;
+                                } else {
+                                    seriesData.push(item);
+                                }
                             } else {
-                                moviesData.push(movie);
+                                // Verificar y actualizar películas existentes
+                                const existingIndex = moviesData.findIndex(m => m.title === item.title);
+                                if (existingIndex > -1) {
+                                    moviesData[existingIndex] = item;
+                                } else {
+                                    moviesData.push(item);
+                                }
                             }
                         });
+                        updateSeriesCarousel();
                         updateMoviesCarousel();
+                        updateMyListViews();
+                        updateBanner();
+                        updateContinueCarousel();
                         saveData();
                     }
                 } catch (error) {
@@ -1408,7 +1597,7 @@
             reader.readAsText(file);
         }
 
-        // Parsear contenido JSON
+        // Parsear contenido JSON - CORREGIDO
         function parseJSONContent(content, fileName) {
             if (!Array.isArray(content)) {
                 console.error('El contenido JSON debe ser un array');
@@ -1416,13 +1605,66 @@
             }
             
             return content.map(item => {
-                return {
-                    title: item.title || 'Película sin título',
-                    image: item.image || createPlaceholderImage(item.title || 'Película'),
-                    video: item.video,
-                    description: `Película: ${item.title || 'Sin título'}`,
-                    type: 'movie'
-                };
+                // Detectar automáticamente si es serie o película
+                let type = 'movie';
+                let seasons = {};
+                
+                // Si tiene propiedad 'type' explícita
+                if (item.type) {
+                    type = item.type;
+                } 
+                // Si tiene propiedades que comienzan con 'cap' (cap1s1, cap2s1, etc.)
+                else if (Object.keys(item).some(key => key.startsWith('cap'))) {
+                    type = 'series';
+                    // Organizar episodios por temporadas
+                    for (const key in item) {
+                        if (key.startsWith('cap')) {
+                            const match = key.match(/cap(\d+)s(\d+)/i);
+                            if (match) {
+                                const episodeNum = parseInt(match[1]);
+                                const seasonNum = parseInt(match[2]);
+                                
+                                if (!seasons[seasonNum]) {
+                                    seasons[seasonNum] = [];
+                                }
+                                
+                                seasons[seasonNum].push({
+                                    title: `Capítulo ${episodeNum}`,
+                                    url: item[key],
+                                    season: seasonNum,
+                                    episode: episodeNum,
+                                    cleanTitle: `Capítulo ${episodeNum}`,
+                                    // Añadir la imagen de la serie a cada episodio
+                                    seriesImage: item.image
+                                });
+                            }
+                        }
+                    }
+                }
+                // Si tiene propiedad 'video' y no tiene episodios, es película
+                else if (item.video && !item.episodes) {
+                    type = 'movie';
+                }
+                
+                if (type === 'series') {
+                    return {
+                        title: item.title || 'Serie sin título',
+                        image: item.image || createPlaceholderImage(item.title || 'Serie'),
+                        description: item.description || `Serie: ${item.title || 'Sin título'}`,
+                        seasons: seasons,
+                        type: 'series',
+                        source: 'json' // Marcar que viene de JSON
+                    };
+                } else {
+                    return {
+                        title: item.title || 'Película sin título',
+                        image: item.image || createPlaceholderImage(item.title || 'Película'),
+                        video: item.video,
+                        description: item.description || `Película: ${item.title || 'Sin título'}`,
+                        type: 'movie',
+                        source: 'json' // Marcar que viene de JSON
+                    };
+                }
             });
         }
 
@@ -1485,7 +1727,8 @@
                 image: firstLogo || createPlaceholderImage(seriesTitle),
                 seasons: seasons,
                 totalEpisodes: episodes.length,
-                type: 'series'
+                type: 'series',
+                source: 'm3u' // Marcar que viene de M3U
             };
         }
 
@@ -1638,7 +1881,7 @@
             banner.style.backgroundSize = 'cover';
             banner.style.backgroundPosition = 'center';
             
-            // Configurar botones del banner - CORREGIDO
+            // Configurar botones del banner
             document.getElementById('banner-play').onclick = function() {
                 if (currentBannerSeries.type === 'series') {
                     playFirstEpisode(currentBannerSeries);
@@ -1671,6 +1914,8 @@
             const videoIframe = document.getElementById('video-iframe');
             const videoTitle = document.getElementById('video-title');
             const videoControls = document.getElementById('video-controls');
+            const iframeControls = document.getElementById('iframe-controls');
+            const videoClose = document.getElementById('video-close');
             
             currentVideo = {
                 movie: movie
@@ -1684,11 +1929,111 @@
             videoTitle.textContent = movie.title;
             videoPlayer.style.display = 'block';
             
-            // Ocultar controles para iframe
+            // Ocultar controles de video normal, mostrar controles de iframe
             videoControls.style.display = 'none';
+            iframeControls.style.display = 'flex';
+            videoClose.style.display = 'flex';
+            
+            // Mostrar controles inicialmente
+            videoTitle.classList.remove('hidden');
+            videoClose.classList.remove('hidden');
+            iframeControls.classList.remove('hidden');
+            
+            // Programar ocultación de controles después de 3 segundos
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                videoTitle.classList.add('hidden');
+                videoClose.classList.add('hidden');
+                iframeControls.classList.add('hidden');
+            }, 3000);
             
             // Cerrar modal si está abierto
             document.getElementById('movie-modal').style.display = 'none';
+        }
+
+        // Reproducir episodio - FUNCIÓN CORREGIDA
+        function playEpisode(episode, seriesTitle, startTime = 0) {
+            const videoPlayer = document.getElementById('video-player');
+            const videoElement = document.getElementById('video-element');
+            const videoIframe = document.getElementById('video-iframe');
+            const videoTitle = document.getElementById('video-title');
+            const videoControls = document.getElementById('video-controls');
+            const iframeControls = document.getElementById('iframe-controls');
+            const videoClose = document.getElementById('video-close');
+            
+            currentVideo = {
+                episode: episode,
+                seriesTitle: seriesTitle
+            };
+
+            // DETERMINAR SI USAR IFRAME O VIDEO SEGÚN LA FUENTE
+            const currentSeries = seriesData.find(s => s.title === seriesTitle);
+            
+            if (currentSeries && currentSeries.source === 'json') {
+                // SERIES JSON: Usar iframe (reproductor simplificado)
+                isIframeMode = true;
+                videoElement.style.display = 'none';
+                videoIframe.style.display = 'block';
+                videoIframe.src = episode.url;
+                videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
+                videoPlayer.style.display = 'block';
+                
+                // Ocultar controles de video normal, mostrar controles de iframe
+                videoControls.style.display = 'none';
+                iframeControls.style.display = 'flex';
+                videoClose.style.display = 'flex';
+                
+                // Mostrar controles inicialmente
+                videoTitle.classList.remove('hidden');
+                videoClose.classList.remove('hidden');
+                iframeControls.classList.remove('hidden');
+                
+                // Programar ocultación de controles después de 3 segundos
+                clearTimeout(controlsTimeout);
+                controlsTimeout = setTimeout(() => {
+                    videoTitle.classList.add('hidden');
+                    videoClose.classList.add('hidden');
+                    iframeControls.classList.add('hidden');
+                }, 3000);
+            } else {
+                // SERIES M3U: Usar video (reproductor completo)
+                isIframeMode = false;
+                videoElement.style.display = 'block';
+                videoIframe.style.display = 'none';
+                videoElement.src = episode.url;
+                videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
+                videoPlayer.style.display = 'block';
+                videoControls.style.display = 'block';
+                iframeControls.style.display = 'none';
+                videoClose.style.display = 'flex';
+                
+                // Mostrar controles inicialmente
+                videoControls.classList.remove('hidden');
+                videoTitle.classList.remove('hidden');
+                videoClose.classList.remove('hidden');
+                
+                // Programar ocultación de controles después de 3 segundos
+                clearTimeout(controlsTimeout);
+                controlsTimeout = setTimeout(() => {
+                    if (!videoElement.paused) {
+                        videoControls.classList.add('hidden');
+                        videoTitle.classList.add('hidden');
+                        videoClose.classList.add('hidden');
+                    }
+                }, 3000);
+                
+                // Configurar tiempo de inicio si es necesario
+                if (startTime > 0) {
+                    videoElement.currentTime = startTime;
+                }
+                
+                // Reproducir video
+                videoElement.play();
+                document.getElementById('play-pause-btn').innerHTML = '⏸️';
+            }
+            
+            // Cerrar modal si está abierto
+            document.getElementById('series-modal').style.display = 'none';
         }
 
         // Actualizar carrusel de series
@@ -1884,7 +2229,7 @@
             updateContinueCarousel();
         }
 
-        // Actualizar carrusel continuar viendo - CORREGIDO
+        // Actualizar carrusel continuar viendo
         function updateContinueCarousel() {
             const carousel = document.getElementById('continue-carousel');
             carousel.innerHTML = '';
@@ -2022,10 +2367,10 @@
             updateMyListViews();
         }
 
-        // Abrir modal de serie - Agregar a continuar viendo
+        // Abrir modal de serie - CORREGIDO PARA MOSTRAR IMÁGENES EN EPISODIOS JSON
         function openSeriesModal(series) {
             currentSeries = series;
-            addToContinueWatching(series); // Agregar al hacer click en la serie
+            addToContinueWatching(series);
             
             // Actualizar contenido del modal
             document.getElementById('modal-title').textContent = series.title;
@@ -2074,7 +2419,13 @@
                         const episodeImage = document.createElement('div');
                         episodeImage.className = 'episode-image';
                         
-                        if (episode.logo && !episode.logo.includes('svg')) {
+                        // USAR LA IMAGEN DE LA SERIE PARA TODOS LOS EPISODIOS DE SERIES JSON
+                        if (series.source === 'json' && series.image && !series.image.includes('svg')) {
+                            episodeImage.style.backgroundImage = `url(${series.image})`;
+                            episodeImage.innerHTML = `<div style="background: rgba(0,0,0,0.7); color: white; padding: 5px; border-radius: 4px; font-size: 12px;">Ep ${episode.episode}</div>`;
+                        } 
+                        // Para series M3U, usar el logo del episodio si está disponible
+                        else if (episode.logo && !episode.logo.includes('svg')) {
                             episodeImage.innerHTML = `<img src="${episode.logo}" alt="${episode.title}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div>Ep ${episode.episode}</div>'">`;
                         } else {
                             episodeImage.innerHTML = `<div>Ep ${episode.episode}</div>`;
@@ -2126,7 +2477,7 @@
             // Mostrar modal
             document.getElementById('series-modal').style.display = 'block';
             
-            // Configurar botón de reproducción - CORREGIDO
+            // Configurar botón de reproducción
             document.getElementById('modal-play').onclick = function() {
                 playFirstEpisode(series);
             };
@@ -2175,47 +2526,14 @@
             };
         }
 
-        // Reproducir episodio
-        function playEpisode(episode, seriesTitle, startTime = 0) {
-            const videoPlayer = document.getElementById('video-player');
-            const videoElement = document.getElementById('video-element');
-            const videoIframe = document.getElementById('video-iframe');
-            const videoTitle = document.getElementById('video-title');
-            const videoControls = document.getElementById('video-controls');
-            
-            currentVideo = {
-                episode: episode,
-                seriesTitle: seriesTitle
-            };
-            
-            // Usar video para M3U
-            isIframeMode = false;
-            videoElement.style.display = 'block';
-            videoIframe.style.display = 'none';
-            videoElement.src = episode.url;
-            videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
-            videoPlayer.style.display = 'block';
-            videoControls.style.display = 'block';
-            
-            // Cerrar modal si está abierto
-            document.getElementById('series-modal').style.display = 'none';
-            
-            // Configurar tiempo de inicio si es necesario
-            if (startTime > 0) {
-                videoElement.currentTime = startTime;
-            }
-            
-            // Reproducir video
-            videoElement.play();
-            document.getElementById('play-pause-btn').innerHTML = '⏸️';
-        }
-
         // Cerrar reproductor de video
         function closeVideoPlayer() {
             const videoPlayer = document.getElementById('video-player');
             const videoElement = document.getElementById('video-element');
             const videoIframe = document.getElementById('video-iframe');
             const videoControls = document.getElementById('video-controls');
+            const iframeControls = document.getElementById('iframe-controls');
+            const videoClose = document.getElementById('video-close');
             
             videoPlayer.style.display = 'none';
             
@@ -2233,6 +2551,8 @@
             
             // Restaurar controles
             videoControls.style.display = 'block';
+            iframeControls.style.display = 'flex';
+            videoClose.style.display = 'flex';
             
             // Salir de pantalla completa si está activa
             if (document.fullscreenElement) {
