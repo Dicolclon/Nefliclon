@@ -84,11 +84,153 @@
         .nav-right {
             display: flex;
             align-items: center;
+            position: relative;
         }
         
         .search-icon, .notifications, .profile {
             margin-left: 20px;
             cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+
+        .search-icon:hover, .notifications:hover, .profile:hover {
+            transform: scale(1.1);
+        }
+
+        /* Estilos del buscador en header */
+        .search-input {
+            position: absolute;
+            right: 90px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 16px;
+            background-color: #333;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            opacity: 0;
+            transition: width 0.4s ease-in-out, opacity 0.4s ease-in-out, padding 0.4s ease-in-out;
+        }
+
+        .search-input.show {
+            width: 200px;
+            padding: 0 15px;
+            opacity: 1;
+        }
+
+        .search-input::placeholder {
+            color: #b3b3b3;
+        }
+
+        /* Página de búsqueda */
+        .search-page {
+            display: none;
+            padding: 120px 50px 50px;
+            min-height: 100vh;
+        }
+
+        .search-header {
+            margin-bottom: 30px;
+        }
+
+        .search-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .search-results-count {
+            color: #b3b3b3;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Grid de resultados de búsqueda */
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .search-result-item {
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+            aspect-ratio: 2/3;
+        }
+
+        .search-result-item:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .search-result-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .search-result-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 15px 10px 10px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .search-result-item:hover .search-result-info {
+            transform: translateY(0);
+        }
+
+        .search-result-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-type {
+            font-size: 0.8rem;
+            color: #b3b3b3;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            color: #b3b3b3;
+            font-size: 1.2rem;
+        }
+
+        /* Indicador de búsqueda en Mi Lista */
+        .search-result-item.in-mylist::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #E50914;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 2;
         }
 
         /* Menú desplegable del perfil */
@@ -234,12 +376,13 @@
         
         .carousel-item img {
             width: 100%;
-            height: 450px; /* Altura fija */
-            object-fit: cover; /* Para mantener la relación de aspecto */
+            height: 450px;
+            object-fit: cover;
             display: block;
         }
         
-        .carousel-item.in-mylist::after {
+        /* CORRECCIÓN: Solo mostrar check cuando hay elementos en Mi Lista y al pasar el mouse */
+        .carousel-item.in-mylist:hover::after {
             content: '✓';
             position: absolute;
             top: 5px;
@@ -298,6 +441,73 @@
             right: 0;
         }
         
+        /* Vista de cuadrícula para series y películas */
+        .grid-view {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .grid-item {
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+            aspect-ratio: 2/3;
+        }
+        
+        .grid-item:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        /* CORRECCIÓN: Solo mostrar check en cuadrícula cuando hay elementos en Mi Lista y al pasar el mouse */
+        .grid-item.in-mylist:hover::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #E50914;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 2;
+        }
+        
+        /* Botón de cambio de vista para series y películas */
+        .view-toggle-section {
+            display: none;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+        
+        .view-toggle-button {
+            background-color: #333;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .view-toggle-button:hover {
+            background-color: #444;
+        }
+        
         /* Vista horizontal de series (solo en Mi Lista) */
         .horizontal-list {
             display: none;
@@ -328,7 +538,7 @@
             position: relative;
         }
         
-        .horizontal-item.in-mylist::after {
+        .horizontal-item.in-mylist:hover::after {
             content: '✓';
             position: absolute;
             top: 10px;
@@ -394,26 +604,6 @@
         
         .horizontal-item-button:hover {
             opacity: 0.8;
-        }
-        
-        /* Botón de cambio de vista (solo en Mi Lista) */
-        .view-toggle {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 15px;
-        }
-        
-        .view-toggle-button {
-            background-color: #333;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .view-toggle-button:hover {
-            background-color: #444;
         }
         
         /* Modal de detalles de serie */
@@ -531,6 +721,11 @@
             position: relative;
         }
         
+        /* CORRECCIÓN: Eliminar el cuadrito "Ep1, Ep2" en episodios JSON */
+        .episode-image .episode-number-overlay {
+            display: none;
+        }
+        
         .episode-info {
             padding: 10px;
         }
@@ -549,8 +744,8 @@
         /* Sección Mi Lista */
         #mylist-section {
             display: none;
-            padding: 50px;
-            margin-top: 100px;
+            padding: 120px 50px 50px;
+            min-height: 100vh;
         }
         
         #mylist-back {
@@ -567,6 +762,13 @@
         
         #mylist-back:hover {
             background: #333;
+        }
+        
+        /* CORRECCIÓN: Botón de cambio de vista en Mi Lista a la derecha */
+        .view-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
         }
         
         /* Reproductor de video mejorado */
@@ -824,7 +1026,11 @@
             }
             
             .carousel-item img {
-                height: 300px; /* Altura reducida en móviles */
+                height: 300px;
+            }
+            
+            .grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
             
             .horizontal-item {
@@ -851,6 +1057,24 @@
             .profile-menu {
                 right: 20px;
             }
+
+            .search-input.show {
+                width: 150px;
+                right: 70px;
+            }
+
+            .search-page {
+                padding: 100px 20px 20px;
+            }
+
+            .search-results-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            #mylist-section {
+                padding: 100px 20px 20px;
+            }
         }
     </style>
 </head>
@@ -874,7 +1098,8 @@
             </ul>
         </div>
         <div class="nav-right">
-            <div class="search-icon">🔍</div>
+            <div class="search-icon" id="search-button">🔍</div>
+            <input type="text" class="search-input" id="search-input" placeholder="Buscar series o películas">
             <div class="notifications">🔔</div>
             <div class="profile" id="profile-button">👤</div>
         </div>
@@ -884,6 +1109,20 @@
             <div class="profile-menu-item" onclick="clearAllContent()">🗑️ Limpiar todo el contenido</div>
         </div>
     </header>
+
+    <!-- Página de búsqueda -->
+    <section class="search-page" id="search-page">
+        <div class="search-header">
+            <h1 class="search-title">Resultados de búsqueda</h1>
+            <div class="search-results-count" id="search-results-count">0 resultados encontrados</div>
+        </div>
+        <div class="search-results-grid" id="search-results">
+            <!-- Los resultados de búsqueda aparecerán aquí -->
+        </div>
+        <div class="no-results" id="no-results" style="display: none;">
+            No se encontraron resultados para tu búsqueda.
+        </div>
+    </section>
 
     <!-- Banner principal -->
     <section class="banner" id="banner-section">
@@ -901,6 +1140,11 @@
     <section class="content-section" id="series-section">
         <h2 class="section-title">Tus series</h2>
         
+        <!-- Botón de cambio de vista para series -->
+        <div class="view-toggle-section" id="series-view-toggle">
+            <button class="view-toggle-button" id="series-view-button">Cambiar a vista cuadrícula</button>
+        </div>
+        
         <!-- Vista carrusel (cuadrícula) -->
         <div class="carousel" id="series-carousel-container">
             <div class="carousel-container" id="series-carousel">
@@ -909,11 +1153,21 @@
             <div class="carousel-nav prev" onclick="moveCarousel('series-carousel', -1)">‹</div>
             <div class="carousel-nav next" onclick="moveCarousel('series-carousel', 1)">›</div>
         </div>
+        
+        <!-- Vista cuadrícula para series -->
+        <div class="grid-view" id="series-grid">
+            <!-- Las series cargadas aparecerán aquí en formato cuadrícula -->
+        </div>
     </section>
 
     <!-- Sección de Películas -->
     <section class="content-section" id="movies-section">
         <h2 class="section-title">Tus películas</h2>
+        
+        <!-- Botón de cambio de vista para películas -->
+        <div class="view-toggle-section" id="movies-view-toggle">
+            <button class="view-toggle-button" id="movies-view-button">Cambiar a vista cuadrícula</button>
+        </div>
         
         <!-- Vista carrusel (cuadrícula) -->
         <div class="carousel" id="movies-carousel-container">
@@ -922,6 +1176,11 @@
             </div>
             <div class="carousel-nav prev" onclick="moveCarousel('movies-carousel', -1)">‹</div>
             <div class="carousel-nav next" onclick="moveCarousel('movies-carousel', 1)">›</div>
+        </div>
+        
+        <!-- Vista cuadrícula para películas -->
+        <div class="grid-view" id="movies-grid">
+            <!-- Las películas cargadas aparecerán aquí en formato cuadrícula -->
         </div>
     </section>
 
@@ -939,6 +1198,7 @@
     <!-- Sección Mi Lista -->
     <section id="mylist-section">
         <button id="mylist-back" onclick="showHome()">← Volver al inicio</button>
+        <!-- CORRECCIÓN: Botón de cambio de vista en Mi Lista a la derecha -->
         <div class="view-toggle">
             <button class="view-toggle-button" id="view-toggle">Cambiar a vista cuadrícula</button>
         </div>
@@ -1085,11 +1345,15 @@
         let currentMovie = null;
         let currentBannerSeries = null;
         let currentVideo = null;
-        let continueWatching = []; // Lista simplificada para continuar viendo
+        let continueWatching = [];
         let playbackSpeed = 1;
-        let currentView = 'horizontal'; // Vista por defecto en Mi Lista
-        let isIframeMode = false; // Para controlar si estamos usando iframe o video
-        let controlsTimeout; // Variable global para el timeout de controles
+        let currentView = 'horizontal';
+        let isIframeMode = false;
+        let controlsTimeout;
+        let seriesViewMode = 'carousel';
+        let moviesViewMode = 'carousel';
+        let lastBannerType = null;
+        let searchQuery = '';
 
         // Función para guardar datos en localStorage
         function saveData() {
@@ -1106,6 +1370,7 @@
             if (savedSeries) {
                 seriesData = JSON.parse(savedSeries);
                 updateSeriesCarousel();
+                updateSeriesGrid();
                 updateMyListViews();
                 updateBanner();
             }
@@ -1114,6 +1379,7 @@
             if (savedMovies) {
                 moviesData = JSON.parse(savedMovies);
                 updateMoviesCarousel();
+                updateMoviesGrid();
             }
             
             const savedMyList = localStorage.getItem('nefliclon_mylist');
@@ -1141,16 +1407,6 @@
                     header.classList.add('scrolled');
                 } else {
                     header.classList.remove('scrolled');
-                }
-            });
-
-            // Cerrar menú del perfil al hacer clic fuera
-            document.addEventListener('click', function(event) {
-                const profileMenu = document.getElementById('profile-menu');
-                const profileButton = document.getElementById('profile-button');
-                
-                if (!profileButton.contains(event.target) && !profileMenu.contains(event.target)) {
-                    profileMenu.classList.remove('show');
                 }
             });
         });
@@ -1188,37 +1444,280 @@
                 toggleMyListView();
             });
 
+            // Botón de cambio de vista para series
+            document.getElementById('series-view-button').addEventListener('click', function() {
+                toggleSeriesView();
+            });
+
+            // Botón de cambio de vista para películas
+            document.getElementById('movies-view-button').addEventListener('click', function() {
+                toggleMoviesView();
+            });
+
             // Menú del perfil
             document.getElementById('profile-button').addEventListener('click', function(event) {
                 event.stopPropagation();
                 const profileMenu = document.getElementById('profile-menu');
                 profileMenu.classList.toggle('show');
             });
+
+            // BUSCADOR - Configuración del sistema de búsqueda
+            const searchButton = document.getElementById('search-button');
+            const searchInput = document.getElementById('search-input');
+
+            // Abrir/cerrar campo de búsqueda
+            searchButton.addEventListener('click', function(event) {
+                event.stopPropagation();
+                searchInput.classList.toggle('show');
+                if (searchInput.classList.contains('show')) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    hideSearchPage();
+                }
+            });
+
+            // Cerrar buscador al hacer clic fuera
+            document.addEventListener('click', function(event) {
+                if (!searchButton.contains(event.target) && !searchInput.contains(event.target)) {
+                    searchInput.classList.remove('show');
+                    if (searchInput.value === '') {
+                        hideSearchPage();
+                    }
+                }
+            });
+
+            // Buscar al escribir
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value.trim();
+                if (searchQuery.length > 0) {
+                    performSearch(searchQuery);
+                } else {
+                    hideSearchPage();
+                }
+            });
+
+            // Buscar al presionar Enter
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchQuery = this.value.trim();
+                    if (searchQuery.length > 0) {
+                        performSearch(searchQuery);
+                    }
+                }
+            });
         }
+
+        // FUNCIONES DEL BUSCADOR
+
+        // Realizar búsqueda
+        function performSearch(query) {
+            showSearchPage();
+            const results = searchContent(query);
+            displaySearchResults(results, query);
+        }
+
+        // Buscar en el contenido
+        function searchContent(query) {
+            const searchTerm = query.toLowerCase();
+            const results = [];
+
+            // Buscar en series
+            seriesData.forEach(series => {
+                if (series.title.toLowerCase().includes(searchTerm) || 
+                    series.description.toLowerCase().includes(searchTerm)) {
+                    results.push({
+                        ...series,
+                        searchType: 'series'
+                    });
+                }
+            });
+
+            // Buscar en películas
+            moviesData.forEach(movie => {
+                if (movie.title.toLowerCase().includes(searchTerm) || 
+                    movie.description.toLowerCase().includes(searchTerm)) {
+                    results.push({
+                        ...movie,
+                        searchType: 'movie'
+                    });
+                }
+            });
+
+            return results;
+        }
+
+        // Mostrar resultados de búsqueda
+        function displaySearchResults(results, query) {
+            const resultsContainer = document.getElementById('search-results');
+            const resultsCount = document.getElementById('search-results-count');
+            const noResults = document.getElementById('no-results');
+
+            resultsContainer.innerHTML = '';
+            
+            if (results.length === 0) {
+                resultsCount.textContent = `No se encontraron resultados para "${query}"`;
+                noResults.style.display = 'block';
+                return;
+            }
+
+            resultsCount.textContent = `${results.length} resultado${results.length > 1 ? 's' : ''} para "${query}"`;
+            noResults.style.display = 'none';
+
+            results.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = `search-result-item ${myList.some(m => m.title === item.title && m.type === item.searchType) ? 'in-mylist' : ''}`;
+                
+                resultItem.addEventListener('click', function() {
+                    if (item.searchType === 'series') {
+                        openSeriesModal(item);
+                    } else {
+                        openMovieModal(item);
+                    }
+                });
+
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = item.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(item.title);
+                };
+
+                const info = document.createElement('div');
+                info.className = 'search-result-info';
+
+                const title = document.createElement('div');
+                title.className = 'search-result-title';
+                title.textContent = item.title;
+
+                const type = document.createElement('div');
+                type.className = 'search-result-type';
+                type.textContent = item.searchType === 'series' ? 'Serie' : 'Película';
+
+                info.appendChild(title);
+                info.appendChild(type);
+                resultItem.appendChild(img);
+                resultItem.appendChild(info);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        // Mostrar página de búsqueda
+        function showSearchPage() {
+            // Ocultar todas las demás secciones
+            hideAllSections();
+            // Mostrar página de búsqueda
+            document.getElementById('search-page').style.display = 'block';
+        }
+
+        // Ocultar página de búsqueda
+        function hideSearchPage() {
+            document.getElementById('search-page').style.display = 'none';
+        }
+
+        // FUNCIONES CORREGIDAS PARA NAVEGACIÓN
+
+        // Ocultar todas las secciones
+        function hideAllSections() {
+            document.getElementById('banner-section').style.display = 'none';
+            document.getElementById('series-section').style.display = 'none';
+            document.getElementById('movies-section').style.display = 'none';
+            document.getElementById('continue-section').style.display = 'none';
+            document.getElementById('mylist-section').style.display = 'none';
+            document.getElementById('search-page').style.display = 'none';
+        }
+
+        // Mostrar página principal
+        function showHome() {
+            hideAllSections();
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('series-section').style.display = 'block';
+            document.getElementById('movies-section').style.display = 'block';
+            document.getElementById('continue-section').style.display = 'block';
+            
+            // Ocultar botones de cambio de vista en el inicio
+            document.getElementById('series-view-toggle').style.display = 'none';
+            document.getElementById('movies-view-toggle').style.display = 'none';
+            
+            // Restablecer vista por defecto (carrusel)
+            setSeriesView('carousel');
+            setMoviesView('carousel');
+            
+            updateSeriesCarousel();
+            updateSeriesGrid();
+            updateMoviesCarousel();
+            updateMoviesGrid();
+            updateContinueCarousel();
+        }
+
+        // Mostrar solo series
+        function showSeries() {
+            hideAllSections();
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('series-section').style.display = 'block';
+            document.getElementById('continue-section').style.display = 'block';
+            
+            // Mostrar botón de cambio de vista solo para series
+            document.getElementById('series-view-toggle').style.display = 'flex';
+            document.getElementById('movies-view-toggle').style.display = 'none';
+            
+            updateSeriesCarousel();
+            updateSeriesGrid();
+            updateContinueCarousel();
+        }
+
+        // Mostrar solo películas
+        function showMovies() {
+            hideAllSections();
+            document.getElementById('banner-section').style.display = 'flex';
+            document.getElementById('movies-section').style.display = 'block';
+            document.getElementById('continue-section').style.display = 'block';
+            
+            // Mostrar botón de cambio de vista solo para películas
+            document.getElementById('series-view-toggle').style.display = 'none';
+            document.getElementById('movies-view-toggle').style.display = 'flex';
+            
+            updateMoviesCarousel();
+            updateMoviesGrid();
+            updateContinueCarousel();
+        }
+
+        // Mostrar Mi Lista
+        function showMyList() {
+            hideAllSections();
+            document.getElementById('mylist-section').style.display = 'block';
+            
+            // Ocultar botones de cambio de vista en Mi Lista
+            document.getElementById('series-view-toggle').style.display = 'none';
+            document.getElementById('movies-view-toggle').style.display = 'none';
+            
+            updateMyListViews();
+        }
+
+        // Resto del código JavaScript permanece igual...
+        // [Todas las demás funciones: clearAllContent, toggleMyListView, setMyListView, etc.]
 
         // Función para limpiar todo el contenido
         function clearAllContent() {
             if (confirm('¿Estás seguro de que quieres eliminar todo el contenido? Esta acción no se puede deshacer.')) {
-                // Limpiar arrays de datos
                 seriesData = [];
                 moviesData = [];
                 myList = [];
                 continueWatching = [];
                 
-                // Limpiar localStorage
                 localStorage.removeItem('nefliclon_series');
                 localStorage.removeItem('nefliclon_movies');
                 localStorage.removeItem('nefliclon_mylist');
                 localStorage.removeItem('nefliclon_continue');
                 
-                // Actualizar interfaces
                 updateSeriesCarousel();
+                updateSeriesGrid();
                 updateMoviesCarousel();
+                updateMoviesGrid();
                 updateMyListViews();
                 updateContinueCarousel();
                 updateBanner();
                 
-                // Cerrar menú del perfil
                 document.getElementById('profile-menu').classList.remove('show');
                 
                 alert('Todo el contenido ha sido eliminado correctamente.');
@@ -1252,6 +1751,60 @@
             }
         }
 
+        // Cambiar entre vistas para series
+        function toggleSeriesView() {
+            if (seriesViewMode === 'carousel') {
+                setSeriesView('grid');
+            } else {
+                setSeriesView('carousel');
+            }
+        }
+
+        // Establecer vista específica para series
+        function setSeriesView(view) {
+            seriesViewMode = view;
+            const carouselContainer = document.getElementById('series-carousel-container');
+            const gridContainer = document.getElementById('series-grid');
+            const toggleButton = document.getElementById('series-view-button');
+            
+            if (view === 'carousel') {
+                carouselContainer.style.display = 'block';
+                gridContainer.style.display = 'none';
+                toggleButton.textContent = 'Cambiar a vista cuadrícula';
+            } else {
+                carouselContainer.style.display = 'none';
+                gridContainer.style.display = 'grid';
+                toggleButton.textContent = 'Cambiar a vista carrusel';
+            }
+        }
+
+        // Cambiar entre vistas para películas
+        function toggleMoviesView() {
+            if (moviesViewMode === 'carousel') {
+                setMoviesView('grid');
+            } else {
+                setMoviesView('carousel');
+            }
+        }
+
+        // Establecer vista específica para películas
+        function setMoviesView(view) {
+            moviesViewMode = view;
+            const carouselContainer = document.getElementById('movies-carousel-container');
+            const gridContainer = document.getElementById('movies-grid');
+            const toggleButton = document.getElementById('movies-view-button');
+            
+            if (view === 'carousel') {
+                carouselContainer.style.display = 'block';
+                gridContainer.style.display = 'none';
+                toggleButton.textContent = 'Cambiar a vista cuadrícula';
+            } else {
+                carouselContainer.style.display = 'none';
+                gridContainer.style.display = 'grid';
+                toggleButton.textContent = 'Cambiar a vista carrusel';
+            }
+        }
+
         // Configurar controles del reproductor de video
         function setupVideoControls() {
             const video = document.getElementById('video-element');
@@ -1282,7 +1835,6 @@
             // Función para mostrar controles y programar su ocultación
             function showVideoControls() {
                 if (isIframeMode) {
-                    // Para iframe: solo mostrar título, botón cerrar y controles simplificados
                     videoTitle.classList.remove('hidden');
                     videoClose.classList.remove('hidden');
                     iframeControls.classList.remove('hidden');
@@ -1294,7 +1846,6 @@
                         iframeControls.classList.add('hidden');
                     }, 3000);
                 } else {
-                    // Para video normal: mostrar todos los controles
                     videoControls.classList.remove('hidden');
                     videoTitle.classList.remove('hidden');
                     videoClose.classList.remove('hidden');
@@ -1535,15 +2086,14 @@
                 const content = e.target.result;
                 const series = parseM3UContent(content, file.name);
                 if (series && series.seasons) {
-                    // Verificar si ya existe para evitar duplicados
                     const existingIndex = seriesData.findIndex(s => s.title === series.title);
                     if (existingIndex > -1) {
-                        // Actualizar en lugar de agregar
                         seriesData[existingIndex] = series;
                     } else {
                         seriesData.push(series);
                     }
                     updateSeriesCarousel();
+                    updateSeriesGrid();
                     updateMyListViews();
                     updateBanner();
                     updateContinueCarousel();
@@ -1565,7 +2115,6 @@
                     if (items && items.length > 0) {
                         items.forEach(item => {
                             if (item.type === 'series') {
-                                // Verificar y actualizar series existentes
                                 const existingIndex = seriesData.findIndex(s => s.title === item.title);
                                 if (existingIndex > -1) {
                                     seriesData[existingIndex] = item;
@@ -1573,7 +2122,6 @@
                                     seriesData.push(item);
                                 }
                             } else {
-                                // Verificar y actualizar películas existentes
                                 const existingIndex = moviesData.findIndex(m => m.title === item.title);
                                 if (existingIndex > -1) {
                                     moviesData[existingIndex] = item;
@@ -1583,7 +2131,9 @@
                             }
                         });
                         updateSeriesCarousel();
+                        updateSeriesGrid();
                         updateMoviesCarousel();
+                        updateMoviesGrid();
                         updateMyListViews();
                         updateBanner();
                         updateContinueCarousel();
@@ -1597,7 +2147,7 @@
             reader.readAsText(file);
         }
 
-        // Parsear contenido JSON - CORREGIDO
+        // Parsear contenido JSON
         function parseJSONContent(content, fileName) {
             if (!Array.isArray(content)) {
                 console.error('El contenido JSON debe ser un array');
@@ -1605,18 +2155,13 @@
             }
             
             return content.map(item => {
-                // Detectar automáticamente si es serie o película
                 let type = 'movie';
                 let seasons = {};
                 
-                // Si tiene propiedad 'type' explícita
                 if (item.type) {
                     type = item.type;
-                } 
-                // Si tiene propiedades que comienzan con 'cap' (cap1s1, cap2s1, etc.)
-                else if (Object.keys(item).some(key => key.startsWith('cap'))) {
+                } else if (Object.keys(item).some(key => key.startsWith('cap'))) {
                     type = 'series';
-                    // Organizar episodios por temporadas
                     for (const key in item) {
                         if (key.startsWith('cap')) {
                             const match = key.match(/cap(\d+)s(\d+)/i);
@@ -1634,15 +2179,12 @@
                                     season: seasonNum,
                                     episode: episodeNum,
                                     cleanTitle: `Capítulo ${episodeNum}`,
-                                    // Añadir la imagen de la serie a cada episodio
                                     seriesImage: item.image
                                 });
                             }
                         }
                     }
-                }
-                // Si tiene propiedad 'video' y no tiene episodios, es película
-                else if (item.video && !item.episodes) {
+                } else if (item.video && !Object.keys(item).some(key => key.startsWith('cap'))) {
                     type = 'movie';
                 }
                 
@@ -1653,7 +2195,7 @@
                         description: item.description || `Serie: ${item.title || 'Sin título'}`,
                         seasons: seasons,
                         type: 'series',
-                        source: 'json' // Marcar que viene de JSON
+                        source: 'json'
                     };
                 } else {
                     return {
@@ -1662,7 +2204,7 @@
                         video: item.video,
                         description: item.description || `Película: ${item.title || 'Sin título'}`,
                         type: 'movie',
-                        source: 'json' // Marcar que viene de JSON
+                        source: 'json'
                     };
                 }
             });
@@ -1674,7 +2216,6 @@
             let episodes = [];
             let firstLogo = '';
             
-            // Primero, recolectar todos los episodios
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 
@@ -1682,25 +2223,20 @@
                     const urlLine = lines[i + 1] ? lines[i + 1].trim() : '';
                     
                     if (urlLine && !urlLine.startsWith('#')) {
-                        // Extraer información del EXTINF
                         let title = '';
                         let logo = '';
                         
-                        // Intentar múltiples formatos de parsing
-                        // Formato 1: #EXTINF:-1 tvg-logo="..." group-title="...",Título
                         const format1Match = line.match(/#EXTINF:[^,]*,(.+)$/);
                         if (format1Match) {
                             title = format1Match[1].trim();
                         }
                         
-                        // Extraer logo
                         const logoMatch = line.match(/tvg-logo="([^"]+)"/);
                         if (logoMatch) {
                             logo = logoMatch[1];
                             if (!firstLogo) firstLogo = logo;
                         }
                         
-                        // Limpiar el título de caracteres especiales innecesarios
                         title = title.replace(/[\[\]]/g, '').trim();
                         
                         if (title) {
@@ -1715,10 +2251,7 @@
                 }
             }
             
-            // Organizar episodios en temporadas
             const seasons = organizeSeasonsFromEpisodes(episodes);
-            
-            // Determinar el título de la serie
             const seriesTitle = extractSeriesTitle(fileName, episodes);
             
             return {
@@ -1728,7 +2261,7 @@
                 seasons: seasons,
                 totalEpisodes: episodes.length,
                 type: 'series',
-                source: 'm3u' // Marcar que viene de M3U
+                source: 'm3u'
             };
         }
 
@@ -1741,14 +2274,13 @@
             episodes.forEach((episode, index) => {
                 const title = episode.title.toUpperCase();
                 
-                // Detectar marcadores de temporada
                 const seasonMarkers = [
                     /TEMPORADA\s*(\d+)/i,
                     /TEMP\s*(\d+)/i,
                     /T(\d+)/,
                     /S(\d+)/,
                     /SEASON\s*(\d+)/i,
-                    /\s+(\d+)x\d+/  // Formato 1x01, 2x01, etc.
+                    /\s+(\d+)x\d+/
                 ];
                 
                 let detectedSeason = null;
@@ -1760,20 +2292,18 @@
                     }
                 }
                 
-                // Si se detecta una nueva temporada
                 if (detectedSeason && detectedSeason !== currentSeason) {
                     currentSeason = detectedSeason;
                     episodeInSeason = 0;
                 }
                 
-                // Detectar número de episodio
                 const episodeMarkers = [
                     /CAP[ÍI]?TULO?\s*(\d+)/i,
                     /CAP\s*(\d+)/i,
                     /EP[ISODIO]*\s*(\d+)/i,
                     /E(\d+)/,
-                    /\d+x(\d+)/,  // Formato 1x01
-                    /\s+(\d+)\s*$/  // Número al final
+                    /\d+x(\d+)/,
+                    /\s+(\d+)\s*$/
                 ];
                 
                 let detectedEpisode = null;
@@ -1785,16 +2315,13 @@
                     }
                 }
                 
-                // Si no se detecta número, usar contador
                 episodeInSeason++;
                 const episodeNumber = detectedEpisode || episodeInSeason;
                 
-                // Inicializar temporada si no existe
                 if (!seasons[currentSeason]) {
                     seasons[currentSeason] = [];
                 }
                 
-                // Agregar episodio a la temporada
                 seasons[currentSeason].push({
                     ...episode,
                     season: currentSeason,
@@ -1803,7 +2330,6 @@
                 });
             });
             
-            // Si no se detectaron temporadas, poner todo en temporada 1
             if (Object.keys(seasons).length === 0 && episodes.length > 0) {
                 seasons[1] = episodes.map((ep, idx) => ({
                     ...ep,
@@ -1818,10 +2344,8 @@
 
         // Limpiar título de episodio
         function cleanEpisodeTitle(title) {
-            // Remover información de temporada/episodio del título
             let clean = title;
             
-            // Remover patrones comunes
             clean = clean.replace(/^(TEMPORADA|TEMP|T|S)\s*\d+\s*/i, '');
             clean = clean.replace(/^(CAP[ÍI]?TULO?|CAP|EP[ISODIO]*|E)\s*\d+\s*/i, '');
             clean = clean.replace(/^\d+x\d+\s*[-:]?\s*/i, '');
@@ -1832,15 +2356,11 @@
 
         // Extraer título de la serie
         function extractSeriesTitle(fileName, episodes) {
-            // Intentar extraer del nombre del archivo
             let seriesTitle = fileName.replace(/\.m3u8?$/i, '').replace(/[_-]/g, ' ').trim();
             
-            // Si el nombre del archivo es genérico, intentar extraer de los episodios
             if (seriesTitle.toLowerCase() === 'playlist' || seriesTitle.toLowerCase() === 'lista' || !seriesTitle) {
-                // Buscar patrones comunes en los títulos de episodios
                 if (episodes.length > 0) {
                     const firstTitle = episodes[0].title;
-                    // Intentar extraer el nombre de la serie del primer episodio
                     const seriesMatch = firstTitle.match(/^([^-–]+?)(?:\s*[-–]|\s+(?:TEMPORADA|TEMP|T|S)\s*\d+)/i);
                     if (seriesMatch) {
                         seriesTitle = seriesMatch[1].trim();
@@ -1858,14 +2378,54 @@
             return `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450' viewBox='0 0 300 450'><rect width='300' height='450' fill='${color}'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%23fff'>${encodeURIComponent(title)}</text></svg>`;
         }
 
-        // Actualizar banner con serie random
+        // CORRECCIÓN: Sistema de banner mejorado para alternar equitativamente
         function updateBanner() {
-            if (seriesData.length === 0 && moviesData.length === 0) return;
-            
-            // Combinar series y películas para el banner
             const allContent = [...seriesData, ...moviesData];
-            const randomIndex = Math.floor(Math.random() * allContent.length);
-            currentBannerSeries = allContent[randomIndex];
+            
+            if (allContent.length === 0) {
+                document.getElementById('banner-title').textContent = 'Bienvenido a NefliClon';
+                document.getElementById('banner-description').textContent = 'Carga tus archivos M3U o JSON para comenzar a ver tu contenido favorito.';
+                document.getElementById('banner-play').onclick = function() {
+                    alert('Primero carga algún contenido para reproducir');
+                };
+                document.getElementById('banner-info').onclick = function() {
+                    alert('Primero carga algún contenido para ver más información');
+                };
+                return;
+            }
+            
+            const series = allContent.filter(item => item.type === 'series');
+            const movies = allContent.filter(item => item.type === 'movie');
+            
+            let selectedContent = null;
+            
+            if (lastBannerType === 'series' && movies.length > 0) {
+                const randomIndex = Math.floor(Math.random() * movies.length);
+                selectedContent = movies[randomIndex];
+                lastBannerType = 'movie';
+            } else if (lastBannerType === 'movie' && series.length > 0) {
+                const randomIndex = Math.floor(Math.random() * series.length);
+                selectedContent = series[randomIndex];
+                lastBannerType = 'series';
+            } else {
+                if (series.length > 0 && movies.length > 0) {
+                    const useSeries = Math.random() > 0.5;
+                    const sourceArray = useSeries ? series : movies;
+                    const randomIndex = Math.floor(Math.random() * sourceArray.length);
+                    selectedContent = sourceArray[randomIndex];
+                    lastBannerType = useSeries ? 'series' : 'movie';
+                } else if (series.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * series.length);
+                    selectedContent = series[randomIndex];
+                    lastBannerType = 'series';
+                } else if (movies.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * movies.length);
+                    selectedContent = movies[randomIndex];
+                    lastBannerType = 'movie';
+                }
+            }
+            
+            currentBannerSeries = selectedContent;
             
             const banner = document.querySelector('.banner');
             const bannerTitle = document.getElementById('banner-title');
@@ -1876,12 +2436,12 @@
             
             if (currentBannerSeries.image && !currentBannerSeries.image.includes('svg')) {
                 banner.style.background = `linear-gradient(to top, #141414, transparent 50%), linear-gradient(to right, #141414, transparent 30%), url('${currentBannerSeries.image}')`;
+                banner.style.backgroundSize = 'cover';
+                banner.style.backgroundPosition = 'center';
+            } else {
+                banner.style.background = `linear-gradient(to top, #141414, transparent 50%), linear-gradient(to right, #141414, transparent 30%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="24" fill="%23fff">${encodeURIComponent(currentBannerSeries.title)}</text></svg>')`;
             }
             
-            banner.style.backgroundSize = 'cover';
-            banner.style.backgroundPosition = 'center';
-            
-            // Configurar botones del banner
             document.getElementById('banner-play').onclick = function() {
                 if (currentBannerSeries.type === 'series') {
                     playFirstEpisode(currentBannerSeries);
@@ -1921,7 +2481,6 @@
                 movie: movie
             };
             
-            // Usar iframe para películas JSON
             isIframeMode = true;
             videoElement.style.display = 'none';
             videoIframe.style.display = 'block';
@@ -1929,17 +2488,14 @@
             videoTitle.textContent = movie.title;
             videoPlayer.style.display = 'block';
             
-            // Ocultar controles de video normal, mostrar controles de iframe
             videoControls.style.display = 'none';
             iframeControls.style.display = 'flex';
             videoClose.style.display = 'flex';
             
-            // Mostrar controles inicialmente
             videoTitle.classList.remove('hidden');
             videoClose.classList.remove('hidden');
             iframeControls.classList.remove('hidden');
             
-            // Programar ocultación de controles después de 3 segundos
             clearTimeout(controlsTimeout);
             controlsTimeout = setTimeout(() => {
                 videoTitle.classList.add('hidden');
@@ -1947,7 +2503,6 @@
                 iframeControls.classList.add('hidden');
             }, 3000);
             
-            // Cerrar modal si está abierto
             document.getElementById('movie-modal').style.display = 'none';
         }
 
@@ -1966,11 +2521,9 @@
                 seriesTitle: seriesTitle
             };
 
-            // DETERMINAR SI USAR IFRAME O VIDEO SEGÚN LA FUENTE
             const currentSeries = seriesData.find(s => s.title === seriesTitle);
             
             if (currentSeries && currentSeries.source === 'json') {
-                // SERIES JSON: Usar iframe (reproductor simplificado)
                 isIframeMode = true;
                 videoElement.style.display = 'none';
                 videoIframe.style.display = 'block';
@@ -1978,17 +2531,14 @@
                 videoTitle.textContent = `${seriesTitle} - T${episode.season}E${episode.episode}: ${episode.cleanTitle || episode.title}`;
                 videoPlayer.style.display = 'block';
                 
-                // Ocultar controles de video normal, mostrar controles de iframe
                 videoControls.style.display = 'none';
                 iframeControls.style.display = 'flex';
                 videoClose.style.display = 'flex';
                 
-                // Mostrar controles inicialmente
                 videoTitle.classList.remove('hidden');
                 videoClose.classList.remove('hidden');
                 iframeControls.classList.remove('hidden');
                 
-                // Programar ocultación de controles después de 3 segundos
                 clearTimeout(controlsTimeout);
                 controlsTimeout = setTimeout(() => {
                     videoTitle.classList.add('hidden');
@@ -1996,7 +2546,6 @@
                     iframeControls.classList.add('hidden');
                 }, 3000);
             } else {
-                // SERIES M3U: Usar video (reproductor completo)
                 isIframeMode = false;
                 videoElement.style.display = 'block';
                 videoIframe.style.display = 'none';
@@ -2007,12 +2556,10 @@
                 iframeControls.style.display = 'none';
                 videoClose.style.display = 'flex';
                 
-                // Mostrar controles inicialmente
                 videoControls.classList.remove('hidden');
                 videoTitle.classList.remove('hidden');
                 videoClose.classList.remove('hidden');
                 
-                // Programar ocultación de controles después de 3 segundos
                 clearTimeout(controlsTimeout);
                 controlsTimeout = setTimeout(() => {
                     if (!videoElement.paused) {
@@ -2022,17 +2569,14 @@
                     }
                 }, 3000);
                 
-                // Configurar tiempo de inicio si es necesario
                 if (startTime > 0) {
                     videoElement.currentTime = startTime;
                 }
                 
-                // Reproducir video
                 videoElement.play();
                 document.getElementById('play-pause-btn').innerHTML = '⏸️';
             }
             
-            // Cerrar modal si está abierto
             document.getElementById('series-modal').style.display = 'none';
         }
 
@@ -2060,6 +2604,30 @@
             });
         }
 
+        // Actualizar cuadrícula de series
+        function updateSeriesGrid() {
+            const grid = document.getElementById('series-grid');
+            grid.innerHTML = '';
+            
+            seriesData.forEach(series => {
+                const item = document.createElement('div');
+                item.className = `grid-item ${myList.some(m => m.title === series.title && m.type === 'series') ? 'in-mylist' : ''}`;
+                item.addEventListener('click', function() {
+                    openSeriesModal(series);
+                });
+                
+                const img = document.createElement('img');
+                img.src = series.image;
+                img.alt = series.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(series.title);
+                };
+                
+                item.appendChild(img);
+                grid.appendChild(item);
+            });
+        }
+
         // Actualizar carrusel de películas
         function updateMoviesCarousel() {
             const carousel = document.getElementById('movies-carousel');
@@ -2081,6 +2649,30 @@
                 
                 item.appendChild(img);
                 carousel.appendChild(item);
+            });
+        }
+
+        // Actualizar cuadrícula de películas
+        function updateMoviesGrid() {
+            const grid = document.getElementById('movies-grid');
+            grid.innerHTML = '';
+            
+            moviesData.forEach(movie => {
+                const item = document.createElement('div');
+                item.className = `grid-item ${myList.some(m => m.title === movie.title && m.type === 'movie') ? 'in-mylist' : ''}`;
+                item.addEventListener('click', function() {
+                    openMovieModal(movie);
+                });
+                
+                const img = document.createElement('img');
+                img.src = movie.image;
+                img.alt = movie.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(movie.title);
+                };
+                
+                item.appendChild(img);
+                grid.appendChild(item);
             });
         }
 
@@ -2206,21 +2798,17 @@
 
         // Agregar o actualizar item en continuar viendo (simplificado)
         function addToContinueWatching(item) {
-            // Buscar si ya existe
             const existingIndex = continueWatching.findIndex(i => i.title === item.title && i.type === item.type);
             if (existingIndex > -1) {
-                // Actualizar timestamp para mantenerlo arriba
                 continueWatching[existingIndex].timestamp = Date.now();
             } else {
-                // Agregar nuevo con progreso simulado
                 continueWatching.unshift({
                     title: item.title,
                     image: item.image,
                     type: item.type,
-                    progress: 30, // Progreso inicial simulado
+                    progress: 30,
                     timestamp: Date.now()
                 });
-                // Limitar a 10 items
                 if (continueWatching.length > 10) {
                     continueWatching = continueWatching.slice(0, 10);
                 }
@@ -2234,7 +2822,6 @@
             const carousel = document.getElementById('continue-carousel');
             carousel.innerHTML = '';
             
-            // Ordenar por timestamp descendente
             const sortedContinue = [...continueWatching].sort((a, b) => b.timestamp - a.timestamp);
             
             sortedContinue.forEach(item => {
@@ -2284,10 +2871,11 @@
                 myList.push(item);
                 saveData();
                 updateSeriesCarousel();
+                updateSeriesGrid();
                 updateMoviesCarousel();
+                updateMoviesGrid();
                 updateMyListViews();
                 
-                // Actualizar botón en el modal
                 if (item.type === 'series') {
                     document.getElementById('mylist-button').textContent = '✓ Mi lista';
                     document.getElementById('mylist-button').classList.add('play-button');
@@ -2307,10 +2895,11 @@
                 myList.splice(index, 1);
                 saveData();
                 updateSeriesCarousel();
+                updateSeriesGrid();
                 updateMoviesCarousel();
+                updateMoviesGrid();
                 updateMyListViews();
                 
-                // Actualizar botón en el modal si está abierto
                 if (item.type === 'series' && currentSeries && currentSeries.title === item.title) {
                     document.getElementById('mylist-button').textContent = '+ Mi lista';
                     document.getElementById('mylist-button').classList.remove('play-button');
@@ -2323,56 +2912,11 @@
             }
         }
 
-        // Mostrar página principal
-        function showHome() {
-            document.getElementById('banner-section').style.display = 'flex';
-            document.getElementById('series-section').style.display = 'block';
-            document.getElementById('movies-section').style.display = 'block';
-            document.getElementById('continue-section').style.display = 'block';
-            document.getElementById('mylist-section').style.display = 'none';
-            updateSeriesCarousel();
-            updateMoviesCarousel();
-            updateContinueCarousel();
-        }
-
-        // Mostrar solo series
-        function showSeries() {
-            document.getElementById('banner-section').style.display = 'flex';
-            document.getElementById('series-section').style.display = 'block';
-            document.getElementById('movies-section').style.display = 'none';
-            document.getElementById('continue-section').style.display = 'block';
-            document.getElementById('mylist-section').style.display = 'none';
-            updateSeriesCarousel();
-            updateContinueCarousel();
-        }
-
-        // Mostrar solo películas
-        function showMovies() {
-            document.getElementById('banner-section').style.display = 'flex';
-            document.getElementById('series-section').style.display = 'none';
-            document.getElementById('movies-section').style.display = 'block';
-            document.getElementById('continue-section').style.display = 'block';
-            document.getElementById('mylist-section').style.display = 'none';
-            updateMoviesCarousel();
-            updateContinueCarousel();
-        }
-
-        // Mostrar Mi Lista
-        function showMyList() {
-            document.getElementById('banner-section').style.display = 'none';
-            document.getElementById('series-section').style.display = 'none';
-            document.getElementById('movies-section').style.display = 'none';
-            document.getElementById('continue-section').style.display = 'none';
-            document.getElementById('mylist-section').style.display = 'block';
-            updateMyListViews();
-        }
-
-        // Abrir modal de serie - CORREGIDO PARA MOSTRAR IMÁGENES EN EPISODIOS JSON
+        // CORRECCIÓN: Abrir modal de serie - ELIMINAR CUADRITO "Ep1, Ep2" EN EPISODIOS JSON
         function openSeriesModal(series) {
             currentSeries = series;
             addToContinueWatching(series);
             
-            // Actualizar contenido del modal
             document.getElementById('modal-title').textContent = series.title;
             document.getElementById('modal-description').textContent = series.description;
             
@@ -2383,18 +2927,15 @@
                 modalHeader.style.background = '#333';
             }
             
-            // Actualizar información de temporadas
             const seasonsContainer = document.getElementById('seasons-container');
             seasonsContainer.innerHTML = '';
             
-            // Contar temporadas con episodios
             let seasonCount = 0;
             for (const key in series.seasons) {
                 if (series.seasons[key] && series.seasons[key].length > 0) seasonCount++;
             }
             document.getElementById('modal-seasons').textContent = `${seasonCount} Temporada${seasonCount > 1 ? 's' : ''}`;
             
-            // Crear secciones para cada temporada
             for (const seasonNum in series.seasons) {
                 const season = series.seasons[seasonNum];
                 if (season && season.length > 0) {
@@ -2419,14 +2960,10 @@
                         const episodeImage = document.createElement('div');
                         episodeImage.className = 'episode-image';
                         
-                        // USAR LA IMAGEN DE LA SERIE PARA TODOS LOS EPISODIOS DE SERIES JSON
                         if (series.source === 'json' && series.image && !series.image.includes('svg')) {
                             episodeImage.style.backgroundImage = `url(${series.image})`;
-                            episodeImage.innerHTML = `<div style="background: rgba(0,0,0,0.7); color: white; padding: 5px; border-radius: 4px; font-size: 12px;">Ep ${episode.episode}</div>`;
-                        } 
-                        // Para series M3U, usar el logo del episodio si está disponible
-                        else if (episode.logo && !episode.logo.includes('svg')) {
-                            episodeImage.innerHTML = `<img src="${episode.logo}" alt="${episode.title}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div>Ep ${episode.episode}</div>'">`;
+                        } else if (episode.logo && !episode.logo.includes('svg')) {
+                            episodeImage.style.backgroundImage = `url(${episode.logo})`;
                         } else {
                             episodeImage.innerHTML = `<div>Ep ${episode.episode}</div>`;
                         }
@@ -2456,7 +2993,6 @@
                 }
             }
             
-            // Configurar botón Mi Lista
             const mylistButton = document.getElementById('mylist-button');
             if (myList.some(m => m.title === series.title && m.type === 'series')) {
                 mylistButton.textContent = '✓ Mi lista';
@@ -2474,10 +3010,8 @@
                 };
             }
             
-            // Mostrar modal
             document.getElementById('series-modal').style.display = 'block';
             
-            // Configurar botón de reproducción
             document.getElementById('modal-play').onclick = function() {
                 playFirstEpisode(series);
             };
@@ -2488,7 +3022,6 @@
             currentMovie = movie;
             addToContinueWatching(movie);
             
-            // Actualizar contenido del modal
             document.getElementById('movie-modal-title').textContent = movie.title;
             document.getElementById('movie-modal-description').textContent = movie.description;
             
@@ -2499,7 +3032,6 @@
                 modalHeader.style.background = '#333';
             }
             
-            // Configurar botón Mi Lista
             const mylistButton = document.getElementById('movie-mylist-button');
             if (myList.some(m => m.title === movie.title && m.type === 'movie')) {
                 mylistButton.textContent = '✓ Mi lista';
@@ -2517,10 +3049,8 @@
                 };
             }
             
-            // Mostrar modal
             document.getElementById('movie-modal').style.display = 'block';
             
-            // Configurar botón de reproducción
             document.getElementById('movie-modal-play').onclick = function() {
                 playMovie(movie);
             };
@@ -2543,18 +3073,15 @@
                 videoElement.pause();
                 videoElement.src = '';
                 
-                // Reiniciar velocidad
                 playbackSpeed = 1;
                 videoElement.playbackRate = 1;
                 document.getElementById('speed-btn').textContent = '1x';
             }
             
-            // Restaurar controles
             videoControls.style.display = 'block';
             iframeControls.style.display = 'flex';
             videoClose.style.display = 'flex';
             
-            // Salir de pantalla completa si está activa
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
