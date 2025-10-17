@@ -1113,7 +1113,7 @@
     <!-- Página de búsqueda -->
     <section class="search-page" id="search-page">
         <div class="search-header">
-            <h1 class="search-title">Resultados de búsqueda</h1>
+            <h1 class="search-title" id="search-title">Resultados de búsqueda</h1>
             <div class="search-results-count" id="search-results-count">0 resultados encontrados</div>
         </div>
         <div class="search-results-grid" id="search-results">
@@ -1473,16 +1473,23 @@
                     searchInput.focus();
                 } else {
                     searchInput.value = '';
-                    hideSearchPage();
+                    // No ocultar la página de búsqueda si estamos mostrando contenido
+                    if (document.getElementById('search-page').style.display === 'block' && searchQuery === '') {
+                        // Mantener la página de búsqueda visible mostrando todo el contenido
+                        showAllContent();
+                    }
                 }
             });
 
-            // Cerrar buscador al hacer clic fuera
+            // Cerrar buscador al hacer clic fuera - CORREGIDO
             document.addEventListener('click', function(event) {
                 if (!searchButton.contains(event.target) && !searchInput.contains(event.target)) {
                     searchInput.classList.remove('show');
-                    if (searchInput.value === '') {
-                        hideSearchPage();
+                    // NO ocultar la página de búsqueda si estamos mostrando contenido
+                    // Solo ocultar si estamos en otra sección
+                    if (searchInput.value === '' && document.getElementById('search-page').style.display === 'block') {
+                        // Mantener la página de búsqueda visible mostrando todo el contenido
+                        showAllContent();
                     }
                 }
             });
@@ -1493,7 +1500,8 @@
                 if (searchQuery.length > 0) {
                     performSearch(searchQuery);
                 } else {
-                    hideSearchPage();
+                    // Cuando se borra todo, mostrar todo el contenido
+                    showAllContent();
                 }
             });
 
@@ -1503,12 +1511,79 @@
                     searchQuery = this.value.trim();
                     if (searchQuery.length > 0) {
                         performSearch(searchQuery);
+                    } else {
+                        showAllContent();
                     }
                 }
             });
         }
 
         // FUNCIONES DEL BUSCADOR
+
+        // Mostrar todo el contenido cuando no hay búsqueda
+        function showAllContent() {
+            showSearchPage();
+            const allContent = [...seriesData, ...moviesData];
+            displayAllContent(allContent);
+        }
+
+        // Mostrar todo el contenido en la página de búsqueda
+        function displayAllContent(content) {
+            const resultsContainer = document.getElementById('search-results');
+            const resultsCount = document.getElementById('search-results-count');
+            const searchTitle = document.getElementById('search-title');
+            const noResults = document.getElementById('no-results');
+
+            resultsContainer.innerHTML = '';
+            
+            if (content.length === 0) {
+                searchTitle.textContent = 'Todo';
+                resultsCount.textContent = 'No hay contenido disponible';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            searchTitle.textContent = 'Todo';
+            resultsCount.textContent = `Total: ${content.length} elementos (${seriesData.length} series + ${moviesData.length} películas)`;
+            noResults.style.display = 'none';
+
+            content.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = `search-result-item ${myList.some(m => m.title === item.title && m.type === item.type) ? 'in-mylist' : ''}`;
+                
+                resultItem.addEventListener('click', function() {
+                    if (item.type === 'series') {
+                        openSeriesModal(item);
+                    } else {
+                        openMovieModal(item);
+                    }
+                });
+
+                const img = document.createElement('img');
+                img.src = item.image;
+                img.alt = item.title;
+                img.onerror = function() {
+                    this.src = createPlaceholderImage(item.title);
+                };
+
+                const info = document.createElement('div');
+                info.className = 'search-result-info';
+
+                const title = document.createElement('div');
+                title.className = 'search-result-title';
+                title.textContent = item.title;
+
+                const type = document.createElement('div');
+                type.className = 'search-result-type';
+                type.textContent = item.type === 'series' ? 'Serie' : 'Película';
+
+                info.appendChild(title);
+                info.appendChild(type);
+                resultItem.appendChild(img);
+                resultItem.appendChild(info);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
 
         // Realizar búsqueda
         function performSearch(query) {
@@ -1551,16 +1626,19 @@
         function displaySearchResults(results, query) {
             const resultsContainer = document.getElementById('search-results');
             const resultsCount = document.getElementById('search-results-count');
+            const searchTitle = document.getElementById('search-title');
             const noResults = document.getElementById('no-results');
 
             resultsContainer.innerHTML = '';
             
             if (results.length === 0) {
+                searchTitle.textContent = 'Resultados de búsqueda';
                 resultsCount.textContent = `No se encontraron resultados para "${query}"`;
                 noResults.style.display = 'block';
                 return;
             }
 
+            searchTitle.textContent = 'Resultados de búsqueda';
             resultsCount.textContent = `${results.length} resultado${results.length > 1 ? 's' : ''} para "${query}"`;
             noResults.style.display = 'none';
 
@@ -1693,9 +1771,6 @@
             
             updateMyListViews();
         }
-
-        // Resto del código JavaScript permanece igual...
-        // [Todas las demás funciones: clearAllContent, toggleMyListView, setMyListView, etc.]
 
         // Función para limpiar todo el contenido
         function clearAllContent() {
